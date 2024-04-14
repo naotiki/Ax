@@ -7,7 +7,7 @@ export const DefaultValueProviders = {
         dbType: "Int",
         name: "連番",
         id: "autoIncrement",
-        expression:"autIncrement()"
+        expression:"autoincrement()"
     },
     uuid: {
         type: "provider",

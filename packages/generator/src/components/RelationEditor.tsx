@@ -1,11 +1,11 @@
+import type { AxTypes, ModelType, RelationType, ValueType } from "lib";
 import { Box, Select, TextInput, Title } from "@mantine/core";
-import type { AxType, DBType, ModelType, RelationType, ValueType } from "lib";
 import type { FC } from "react";
 
 type RelationEditorProps = {
   otherModels: ModelType[];
-  field: RelationType<DBType, AxType>;
-  onSave: (field: RelationType<DBType, AxType>) => void;
+  field: RelationType;
+  onSave: (field: RelationType) => void;
 };
 export const RelationEditor: FC<RelationEditorProps> = ({
   otherModels,
@@ -31,9 +31,9 @@ export const RelationEditor: FC<RelationEditorProps> = ({
         size="xl"
         label="表示名"
         placeholder="表示名"
-        value={field.label}
+        value={field.meta.label}
         onChange={(e) => {
-          onSave({ ...field, label: e.currentTarget.value });
+          onSave({ ...field, meta:{...field.meta,label: e.currentTarget.value} });
         }}
       />
       <Select
@@ -43,7 +43,7 @@ export const RelationEditor: FC<RelationEditorProps> = ({
           const defaultRerationField = otherModels
             .find((m) => m._id === value)
             ?.fields?.find((f) => f.fieldType === "value" && f.id) as
-            | ValueType<DBType, AxType>
+            | ValueType<AxTypes>
             | undefined;
           onSave({
             ...field,
@@ -62,13 +62,13 @@ export const RelationEditor: FC<RelationEditorProps> = ({
           field.relation.modelId
             ? otherModels.map((m) => ({
                 value: m._id,
-                label: m.label ?? m.name,
+                label: m.meta.label ?? m.name,
               }))
             : [
                 { value: "", label: "未選択", disabled: true },
                 ...otherModels.map((m) => ({
                   value: m._id,
-                  label: m.label ?? m.name,
+                  label: m.meta.label ?? m.name,
                 })),
               ]
         }
@@ -92,18 +92,18 @@ export const RelationEditor: FC<RelationEditorProps> = ({
           .find((m) => m._id === field.relation.modelId)
           ?.fields.map((f) => ({
             value: f._id,
-            label: f.label ?? f.name,
+            label: f.meta.label ?? f.name,
             disabled: f.fieldType !== "value" || !f.id /* &&!f.unique */,
           }))}
         disabled={!field.relation.modelId}
       />
       <Select
-        value={field.relation.displayColumn}
+        value={field.meta.displayColumn}
         onChange={(value) => {
           onSave({
             ...field,
-            relation: {
-              ...field.relation,
+            meta:{
+              ...field.meta,
               displayColumn: value ?? undefined,
             },
           });
@@ -115,7 +115,7 @@ export const RelationEditor: FC<RelationEditorProps> = ({
           .find((m) => m._id === field.relation.modelId)
           ?.fields.map((f) => ({
             value: f._id,
-            label: f.label ?? f.name,
+            label: f.meta.label ?? f.name,
           }))}
         disabled={!field.relation.modelId}
       />

@@ -1,43 +1,38 @@
-import type { DBType, AxType, RulesOfJSType, JSType } from "..";
+import type { DBType, RulesOfJSType, AxTypes, AxTypeOfTypeExtender, AxTypeDetail } from "..";
 
-export type FieldTypes = ValueType<DBType, AxType> | RelationType<DBType, AxType>;
+export type FieldTypes = ValueType<AxTypes> | RelationType;
 
-export type FieldType<F extends string> = {
-	_id:string;
+export type FieldType<F extends string,M extends {}> = {
+	readonly _id: string;
 	name: string;
-	label?: string;
-	description?: string;
-	fieldType: F;
-
-	readonly: boolean,
-	invisible: boolean
-};
-type DBAttributeOf<D extends DBType> = {
-	type: D;
-	defaultValue?: string;
-} | {
-	type: D;
-	defaultValueProviderName: string;
+	readonly fieldType: F;
+	meta:{
+		label?: string;
+		description?: string;
+		readonly: boolean,
+		invisible: boolean
+	}&M
 };
 
-export type ValueType<D extends DBType, A extends AxType> = {
+export type ValueType<A extends AxTypes> = {
 	axType: A;
-	rules: RulesOfJSType<A["js"]>[];
+	typeParams: AxTypeOfTypeExtender<A>;
 	optional: boolean;
 	id: boolean;
 	unique: boolean;
-	default?: FieldDefault<D>;
-} & FieldType<"value"> ;
+	default?: FieldDefault<AxTypeDetail<A>["db"]>;
+} & FieldType<"value",{
+	rules: RulesOfJSType<AxTypeDetail<A>["js"]>[];
+}>;
 
-export type RelationType<D extends DBType, J extends AxType> = {
+export type RelationType = {
 	relation: {
 		modelId: string;
 		relationFieldIds: string[];
-		displayColumn?: string;
 	};
-} & FieldType<"relation">;
+} & FieldType<"relation",{displayColumn?: string;}>;
 
-export type FieldDefault<D extends DBType>={
+export type FieldDefault<D extends DBType> = {
 	type: "value";
 	dbType: D;
 	defaultValue: string | null;
@@ -47,4 +42,7 @@ export type FieldDefault<D extends DBType>={
 	name: string;
 	id: string;
 	expression: string;
+}
+export function checkFieldType<A extends AxTypes>(field: ValueType<AxTypes>, t: A): field is ValueType<A> {
+	return field.axType === t
 }

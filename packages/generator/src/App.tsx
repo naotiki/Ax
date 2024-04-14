@@ -2,15 +2,16 @@ import "./App.css";
 import "@mantine/core/styles.css";
 import "@mantine/dates/styles.css";
 import {
-  AxTypes,
   type ModelType,
-  type AxType,
   type DBType,
   type ValueType,
   DefaultValueProviders,
   type FieldDefault,
   type Rules,
   type JSType,
+  type AxTypes,
+  getAxTypeData,
+  ModelValidator,
 } from "lib";
 import {
   AppShell,
@@ -32,16 +33,22 @@ import {
   Popover,
   Radio,
   Space,
-  Switch,
+  Badge,
+  Loader,
+  HoverCard,
+  Notification,
+  Box,
+  Center,
 } from "@mantine/core";
 import { useDisclosure, useLocalStorage } from "@mantine/hooks";
-import { useState, type FC } from "react";
+import { useEffect, useState, type FC } from "react";
 import {
   IconCirclesRelation,
   IconEdit,
   IconId,
   IconLink,
   IconPlus,
+  IconSearch,
   IconSort09,
   IconTrash,
   IconX,
@@ -50,6 +57,7 @@ import { AxcelInput } from "./components/AxcelInput";
 import { FieldEditor, fieldTypesSelectData } from "./components/FieldEditor";
 import { RelationEditor } from "./components/RelationEditor";
 import { nanoid } from "nanoid";
+import type { ModelValidateError } from "lib/ModelValidator";
 
 const theme = createTheme({
   defaultGradient: {
@@ -65,6 +73,13 @@ function App() {
     key: "models",
     defaultValue: [],
   });
+  const [errors, setErrors] = useState<ModelValidateError[] | null>(null);
+  useEffect(() => {
+    setErrors(null);
+    ModelValidator(models).then((errors) => {
+      setErrors(errors);
+    });
+  }, [models]);
   const [selectedModelId, setSelectedModelId] = useState<string | null>(null);
   const selectedModel =
     selectedModelId !== null
@@ -91,6 +106,71 @@ function App() {
                 size="sm"
               />
               <Title order={1}>Ax gen</Title>
+              <Space style={{ flexGrow: 1 }} />
+              {errors ? (
+                <HoverCard shadow="md">
+                  <HoverCard.Target>
+                    <Group>
+                      <Badge
+                        size="xl"
+                        circle
+                        color={errors.length > 0 ? "red" : "green"}
+                      >
+                        {errors.length}
+                      </Badge>
+
+                      <Button disabled={!errors || errors.length > 0} onClick={()=>{
+                        fetch("http://localhost:8080/migrate", {
+                          method: "POST",
+                          body: JSON.stringify(models),
+                        })
+                      }}>
+                        変更を適用
+                      </Button>
+                    </Group>
+                  </HoverCard.Target>
+                  <HoverCard.Dropdown>
+                    <Center>
+                      <IconSearch />
+                      <Title order={5}>見つかったエラー</Title>
+                    </Center>
+                    {errors.length > 0 ? (
+                      errors.map((error) => (
+                        <Notification
+                          key={error.error + error.modelId + error.fieldId}
+                          color="red"
+                          withCloseButton={false}
+                          title={(() => {
+                            const model = models.find(
+                              (m) => m._id === error.modelId,
+                            );
+                            const modelName =
+                              model?.meta?.label ?? model?.name ?? "不明";
+                            if (error.fieldId) {
+                              const field = model?.fields.find(
+                                (f) => f._id === error.fieldId,
+                              );
+                              return `${modelName} > ${
+                                field?.meta?.label ?? field?.name ?? "不明"
+                              }`;
+                            }
+                            return modelName;
+                          })()}
+                          onClick={() => {
+                            setSelectedModelId(error.modelId);
+                          }}
+                        >
+                          {error.error}
+                        </Notification>
+                      ))
+                    ) : (
+                      <Text size="md">エラーはありません</Text>
+                    )}
+                  </HoverCard.Dropdown>
+                </HoverCard>
+              ) : (
+                <Loader />
+              )}
             </Group>
           </AppShell.Header>
           <AppShell.Navbar p="md">
@@ -110,7 +190,7 @@ function App() {
                       setSelectedModelId(model._id);
                     }}
                   >
-                    {model.label}
+                    {model.meta.label}
                   </Button>
                 ))}
               </Stack>
@@ -122,10 +202,12 @@ function App() {
                   const id = nanoid();
                   const m: ModelType = {
                     _id: id,
-                    label: `新しいモデル ${id.slice(0, 4)}`,
+                    meta:{
+                      label:`新しいモデル ${id.slice(0, 4)}`,
+                      computedStyles: [],
+                    },
                     name: `NewModel_${id.slice(0, 4)}`,
                     fields: [],
-                    computedStyles: [],
                   };
                   setModels([...models, m]);
                   setSelectedModelId(m._id);
@@ -186,9 +268,9 @@ function ModelEditor({ model, models, onSave, errors }: ModelEditorProps) {
           size="xl"
           label="表示名"
           placeholder="表示名"
-          value={model.label}
+          value={model.meta.label}
           onChange={(e) => {
-            onSave({ ...model, label: e.currentTarget.value });
+            onSave({ ...model, meta: { ...model.meta, label: e.currentTarget.value }});
           }}
         />
         <Title order={3}>フィールド</Title>
@@ -207,12 +289,12 @@ function ModelEditor({ model, models, onSave, errors }: ModelEditorProps) {
             <Card.Section>
               <Group>
                 {f.fieldType === "value" ? <IconEdit /> : <IconLink />}
-                <Title order={3}>{f.label}</Title>
+                <Title order={3}>{f.meta.label}</Title>
                 {f.fieldType === "relation" && (
                   <>
                     <IconCirclesRelation />
                     <Title order={3}>
-                      {models.find((m) => m._id === f.relation.modelId)?.label}
+                      {models.find((m) => m._id === f.relation.modelId)?.meta?.label}
                     </Title>
                   </>
                 )}
@@ -222,7 +304,7 @@ function ModelEditor({ model, models, onSave, errors }: ModelEditorProps) {
               <Group>
                 {f.fieldType === "value" && (
                   <>
-                    <Text>タイプ: {f.axType.id}</Text>
+                    <Text>タイプ: {f.axType}</Text>
                   </>
                 )}
                 <Space style={{ flexGrow: 1 }} />
@@ -273,15 +355,18 @@ function ModelEditor({ model, models, onSave, errors }: ModelEditorProps) {
                     {
                       _id: id,
                       name: `NewField_${id.slice(0, 4)}`,
-                      label: `新しいフィールド ${id.slice(0, 4)}`,
+                      meta:{
+                        label:`新しいフィールド ${id.slice(0, 4)}`,
+                        rules: [],
+                        readonly: false,
+                        invisible: false,
+                      },
                       fieldType: "value",
-                      axType: AxTypes.string,
-                      rules: [],
+                      axType: "string",
+                      typeParams: {},
                       optional: true,
                       id: false,
                       unique: false,
-                      readonly: false,
-                      invisible: false,
                       default: undefined,
                     },
                   ],
@@ -301,14 +386,16 @@ function ModelEditor({ model, models, onSave, errors }: ModelEditorProps) {
                     {
                       _id: id,
                       name: `NewField_${id.slice(0, 4)}`,
-                      label: `新しい関連付け ${id.slice(0, 4)}`,
+                      meta:{
+                        label: `新しい関連付け ${id.slice(0, 4)}`,
+                        readonly: false,
+                        invisible: false,
+                      },
                       fieldType: "relation",
                       relation: {
                         modelId: "",
                         relationFieldIds: [],
                       },
-                      readonly: false,
-                      invisible: false,
                     },
                   ],
                 });
@@ -329,15 +416,18 @@ function ModelEditor({ model, models, onSave, errors }: ModelEditorProps) {
                     {
                       _id: id,
                       name: "id",
-                      label: "ID",
+                      meta:{
+                        label: "ID",
+                        readonly: true,
+                        invisible: false,
+                        rules: [],
+                      },
                       fieldType: "value",
-                      axType: AxTypes.int,
-                      rules: [],
+                      axType: "int",
+                      typeParams: {},
                       optional: false,
                       id: true,
                       unique: false,
-                      readonly: true,
-                      invisible: false,
                       default: DefaultValueProviders.autoIncrement,
                     },
                   ],
@@ -357,15 +447,18 @@ function ModelEditor({ model, models, onSave, errors }: ModelEditorProps) {
                     {
                       _id: id,
                       name: "id",
-                      label: "ID",
+                      meta:{
+                        label: "ID",
+                        readonly: true,
+                        invisible: false,
+                        rules: [],
+                      },
                       fieldType: "value",
-                      axType: AxTypes.string,
-                      rules: [],
+                      axType: "string",
+                      typeParams: {},
                       optional: false,
                       id: true,
                       unique: false,
-                      readonly: true,
-                      invisible: false,
                       default: DefaultValueProviders.uuid,
                     },
                   ],
@@ -409,7 +502,7 @@ function ModelEditor({ model, models, onSave, errors }: ModelEditorProps) {
 }
 
 type FieldDefaultEditorProps = {
-  field: ValueType<DBType, AxType>;
+  field: ValueType<AxTypes>;
   value: FieldDefault<DBType> | undefined;
   onChange: (value: FieldDefault<DBType> | undefined) => void;
 };
@@ -432,6 +525,14 @@ export const FieldDefaultEditor: FC<FieldDefaultEditorProps> = ({
             onChange(undefined);
             return;
           }
+          if (value === "value") {
+            onChange({
+              type: "value",
+              dbType: getAxTypeData(field.axType).db,
+              defaultValue: null,
+            });
+            return;
+          }
         }}
         label="デフォルト"
         description="デフォルト値を設定します。"
@@ -444,34 +545,38 @@ export const FieldDefaultEditor: FC<FieldDefaultEditorProps> = ({
         </Group>
       </Radio.Group>
       {radioValue === "value" && (
-        <Group>
-          <AxcelInput
-            field={field}
-            value={value?.type === "value" ? value?.defaultValue ?? null : null}
-            onValueChange={(v) => {
-              onChange({
-                type: "value",
-                dbType: field.axType.db,
-                defaultValue: v,
-              });
-            }}
-          />
-          <ActionIcon
-            variant="subtle"
-            color="red"
-            size={"md"}
-            onClick={() => {
-              onChange({
-                type: "value",
-                dbType: field.axType.db,
-                defaultValue: null,
-              });
-            }}
-            disabled={value?.type !== "value" || value?.defaultValue === null}
-          >
-            <IconX />
-          </ActionIcon>
-        </Group>
+        <Box>
+          <Group>
+            <AxcelInput
+              field={field}
+              value={
+                value?.type === "value" ? value?.defaultValue ?? null : null
+              }
+              onValueChange={(v) => {
+                onChange({
+                  type: "value",
+                  dbType: getAxTypeData(field.axType).db,
+                  defaultValue: v,
+                });
+              }}
+            />
+            <ActionIcon
+              variant="subtle"
+              color="red"
+              size={"md"}
+              onClick={() => {
+                onChange({
+                  type: "value",
+                  dbType: getAxTypeData(field.axType).db,
+                  defaultValue: null,
+                });
+              }}
+              disabled={value?.type !== "value" || value?.defaultValue === null}
+            >
+              <IconX />
+            </ActionIcon>
+          </Group>
+        </Box>
       )}
       {radioValue === "provider" && (
         <Select
@@ -485,7 +590,7 @@ export const FieldDefaultEditor: FC<FieldDefaultEditorProps> = ({
           data={Object.values(DefaultValueProviders).map((v) => ({
             value: v.id,
             label: v.name,
-            disabled: v.dbType !== field.axType.db,
+            disabled: v.dbType !== getAxTypeData(field.axType).db,
           }))}
         />
       )}

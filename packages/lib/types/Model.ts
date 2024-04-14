@@ -1,16 +1,18 @@
 import type { FieldTypes } from "..";
 
 export type ModelType = {
-	_id: string;
+	readonly _id: string;
 	name: string;
-	label?: string;
-	description?: string;
-	computedStyles: ({
-		compute: BoolExpression;
-	} & ({
-		row: Record<string, string>;
-	} | Record<string, Record<string, string>>))[];
 	fields: FieldTypes[];
+	meta: {//破壊的変更ではない
+		label?: string;
+		description?: string;
+		computedStyles: ({
+			compute: BoolExpression;
+		} & ({
+			row: Record<string, string>;
+		} | Record<string, Record<string, string>>))[];
+	}
 };
 
 

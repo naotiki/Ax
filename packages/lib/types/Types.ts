@@ -1,3 +1,4 @@
+import type { ValueType } from "./Field";
 import type { ValueOf } from "./Utils";
 
 export type DBType =
@@ -16,29 +17,40 @@ export type JSType =
 	| "Date"
 	| "Array"
 	| "Enum";
-type AxTypesIdWithoutBuilder = "string" | "int" | "float" | "decimal" | "bool" | "date" | "datetime";
-export type AxType =
+type AxTypesWithoutBuilder = Exclude<AxTypes, "Array" | "Enum">;
+export type AxTypes = keyof AxTypesWithProperties;
+export type AxTypeOfTypeExtender<T extends AxTypes> = AxTypesWithProperties[T]
+export type AxTypesWithProperties = {
+	string: {}
+	int: {}
+	float: {}
+	decimal: {}
+	bool: {}
+	date: {
+		meta: {
+			isDateOnly?: boolean;
+		}
+		updatedAt?: boolean;//TODO 
+	},
+	Array: {
+		of: AxTypes
+	}
+	Enum: {
+		name:string;
+		entries: { value: string; label?: string }[]
+	}
+}
+export type AxTypeDetail<A extends AxTypes> = (typeof AxTypeDatas)[A]
+export type AxTypeData =
 	{
-		id: AxTypesIdWithoutBuilder;
+		id: AxTypes;
 		js: JSType;
 		db: DBType;
 	}
-	| {
-		id: "Array";
-		js: JSType;
-		db: DBType;
-		of: AxType;
-	}
-	| {
-		id: "Enum";
-		js: JSType;
-		db: DBType;
-		entries: {
-			value: string;
-			label?: string
-		}[];
-	}
-export const AxTypes = {
+export function getAxTypeData<A extends AxTypes>(a: A): AxTypeDetail<A> {
+	return AxTypeDatas[a]
+}
+export const AxTypeDatas = {
 	string: {
 		id: "string",
 		js: "string",
@@ -69,24 +81,29 @@ export const AxTypes = {
 		js: "Date",
 		db: "Date",
 	},
-	datetime: {
-		id: "datetime",
-		js: "Date",
-		db: "Date"
+	Array: {
+		id: "Array",
+		js: "Array",
+		db: "Array",
+	},
+	Enum: {
+		id: "Enum",
+		js: "Enum",
+		db: "Enum",
 	}
-} satisfies Record<AxTypesIdWithoutBuilder, AxType>;
+} satisfies Record<AxTypes, AxTypeData>;
 
 export const AxTypeBuilders = {
-	array: (of: AxType) => ({
+	array: (of: AxTypes) => ({
 		id: "Array",
 		js: "Array",
 		db: "Array",
 		of: of,
-	} as AxType),
+	} as AxTypeData),
 	enum: (entries: { value: string; label?: string }[]) => ({
 		id: "Enum",
 		js: "Enum",
 		db: "Enum",
 		entries: entries,
-	} as AxType),
+	} as AxTypeData),
 }

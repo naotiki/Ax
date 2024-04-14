@@ -3,6 +3,75 @@ export * from "./types/Model";
 export * from "./types/Rules";
 export * from "./types/Types";
 export * from "./types/Utils";
-export * from "./types/Value";
+
 export * from "./values/DefaultValueProviders";
 export * from "./Rules";
+import { checkFieldType, type ValueType } from "./types/Field";
+export { checkFieldType };
+import { ModelValidator } from "./ModelValidator";
+import type { ModelType } from "./types/Model";
+import { getAxTypeData, type AxTypes } from "./types/Types";
+import { toCamelCase } from "../generator/src/utils/CaseUtils";
+export { ModelValidator };
+
+export const PrismaSchemaGenerator = (models: ModelType[], headerContents: string, write: (s: string) => void) => {
+    write(headerContents);
+    for (const model of models) {
+        const addContents: string[] = [];
+        write(`model ${model.name} {\n`);
+        for (const field of model.fields) {
+            if (field.fieldType === "value") {
+                if (checkFieldType(field, "Enum")) {
+                    //TODO
+                }
+
+                write(`\t${field.name}   ${getAxTypeData(field.axType).db}${field.optional ? "?" : ""}`);
+                if (field.id) {
+                    write(" @id");
+                }
+                if (field.unique) {
+                    write(" @unique");
+                }
+                if (checkFieldType(field, "date") && field.typeParams.updatedAt) {
+                    write(" @updatedAt");
+                }
+                if (field.default) {
+                    write(` @default(${field.default.type === "value" ?
+                        field.axType === "string" ? `"${field.default.defaultValue}"` : field.default.defaultValue
+                        : field.default.expression})`);
+                }
+
+            }else if(field.fieldType === "relation"){
+                const relationModel = models.find(m=>m._id===field.relation.modelId)
+                const relationField = relationModel?.fields.find(f=>f._id===field.relation.relationFieldIds[0]) as ValueType<AxTypes>;
+                if (!relationModel) {
+                    throw new Error("Relation Model Not Found");
+                }
+                const fieldForRelation={
+                    name:`${toCamelCase(relationModel.name)}${relationField.name[0].toUpperCase()}${relationField.name.slice(1)}`,
+                    dbType:getAxTypeData(relationField.axType).db
+                }
+                write(`\t${field.name} ${models.find(m=>m._id===field.relation.modelId)?.name}`)
+                write(` @relation(fields: [${fieldForRelation.name}], references: [${relationField.name}])`)
+                write("\n")
+                write(`\t${fieldForRelation.name} ${fieldForRelation.dbType}${/* field.optional ? "?" : "" */""}`)
+            }
+            write("\n");
+        }//Field End
+        for (const m of models) {
+            if (m._id === model._id) continue;
+            for (const f of m.fields) {
+                if (f.fieldType==="relation"&&f.relation.modelId===model._id) {
+                    toCamelCase(m.name)
+
+                    write(`\t${toCamelCase(m.name)} ${m.name}[]\n`)
+                }
+            }
+        }
+        write("}\n");
+        for (const addContent of addContents) {
+            write(`\n${addContent}\n`);
+        }
+    }//Model End
+
+}

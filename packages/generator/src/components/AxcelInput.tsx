@@ -6,64 +6,66 @@ import {
   TextInput,
 } from "@mantine/core";
 import { DatePickerInput, DateTimePicker } from "@mantine/dates";
-import type { LengthRule, RangeRule, AxType, DBType, ValueType } from "lib";
+import { type LengthRule, type RangeRule, type ValueType, type AxTypes, getAxTypeData, checkFieldType } from "lib";
 
 type AxcelInputProps = {
-  field: ValueType<DBType, AxType>;
+  field: ValueType<AxTypes>;
   value: string | null;
   onValueChange: (value: string | null) => void;
   disabled?: boolean;
 };
+
+
+
+
 export const AxcelInput = ({
-  field: { axType, ...field },
+  field,
   value,
   onValueChange,
   disabled,
 }: AxcelInputProps) => {
-  if (axType.id === "Enum") {
+  if (checkFieldType(field,"Enum")) {
     return (
       <Select
         autoFocus
         rightSectionWidth={"auto"}
-        data={
-             axType.entries.map((e) => ({
-                value: e.value,
-                label: e.label ?? e.value,
-              }))
-        }
+        data={field.typeParams.entries.map((e) => ({
+          value: e.value,
+          label: e.label ?? e.value,
+        }))}
         value={value ?? ""}
         onChange={(e) => onValueChange(e)}
         disabled={disabled}
         allowDeselect={false}
-        placeholder={value===null ? "「空」" : undefined}
+        placeholder={value === null ? "「空」" : undefined}
       />
     );
   }
-  if (axType.id === "bool") {
+  if (checkFieldType(field,"bool")) {
     return (
       <Center>
         <Checkbox
           checked={value?.toLowerCase() === "true"}
           onChange={(e) => onValueChange(e.currentTarget.checked.toString())}
           disabled={disabled}
-          description={value===null?"「空」":undefined}
+          description={value === null ? "「空」" : undefined}
         />
       </Center>
     );
   }
-  if (axType.id === "date") {
-    return (
-      <DatePickerInput
-        valueFormat="YYYY/MM/DD"
-        autoFocus
-        value={value ? new Date(value) : null}
-        onChange={(d) => onValueChange(d?.toLocaleDateString() ?? "")}
-        disabled={disabled}
-        placeholder={value===null?"「空」":undefined}
-      />
-    );
-  }
-  if (axType.id === "datetime") {
+  if (checkFieldType(field,"date")) {
+    if(field.typeParams.meta.isDateOnly){
+      return (
+        <DatePickerInput
+          valueFormat="YYYY/MM/DD"
+          autoFocus
+          value={value ? new Date(value) : null}
+          onChange={(d) => onValueChange(d?.toLocaleDateString() ?? "")}
+          disabled={disabled}
+          placeholder={value === null ? "「空」" : undefined}
+        />
+      );
+    }
     return (
       <DateTimePicker
         valueFormat="YYYY/MM/DD HH:mm"
@@ -71,12 +73,12 @@ export const AxcelInput = ({
         value={value ? new Date(value) : null}
         onChange={(d) => onValueChange(d?.toLocaleString() ?? "")}
         disabled={disabled}
-        placeholder={value===null?"「空」":undefined}
+        placeholder={value === null ? "「空」" : undefined}
       />
     );
   }
-  if (axType.js === "number") {
-    const rule = field.rules.find((r) => r.ruleName === "range") as
+  if (getAxTypeData(field.axType).js === "number") {
+    const rule = field.meta.rules.find((r) => r.ruleName === "range") as
       | RangeRule
       | undefined;
     return (
@@ -86,14 +88,14 @@ export const AxcelInput = ({
         value={value ? Number(value) : undefined}
         min={rule?.params?.min}
         max={rule?.params?.max}
-        allowDecimal={!(axType.id === "int")}
+        allowDecimal={!(field.axType === "int")}
         onChange={(e) => onValueChange(e.toString())}
         disabled={disabled}
-        placeholder={value===null?"「空」":undefined}
+        placeholder={value === null ? "「空」" : undefined}
       />
     );
   }
-  const rule = field.rules.find((r) => r.ruleName === "length") as
+  const rule = field.meta.rules.find((r) => r.ruleName === "length") as
     | LengthRule
     | undefined;
   return (
@@ -104,7 +106,7 @@ export const AxcelInput = ({
       value={value ?? ""}
       onChange={(e) => onValueChange(e.currentTarget.value)}
       disabled={disabled}
-      placeholder={value===null?"「空」":undefined}
+      placeholder={value === null ? "「空」" : undefined}
     />
   );
 };

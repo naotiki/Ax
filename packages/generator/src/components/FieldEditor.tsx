@@ -1,12 +1,32 @@
-import { AxTypes, type AxType, AxTypeBuilders, type Rules, RuleParams, type DBType, type ValueType } from "lib";
 import {
-  Title, Group,
+  AxTypeDatas,
+  type AxTypes,
+  AxTypeBuilders,
+  type Rules,
+  RuleParams,
+  type DBType,
+  type ValueType,
+  checkFieldType,
+  getAxTypeData,
+  AxTypeData,
+  AxTypeDetail,
+  type AxTypesWithProperties,
+} from "lib";
+import {
+  Title,
+  Group,
   Button,
   Stack,
   TextInput,
-  Menu, Text, Box,
-  Select, ActionIcon,
-  Textarea, Checkbox, Divider, MenuItem
+  Menu,
+  Text,
+  Box,
+  Select,
+  ActionIcon,
+  Textarea,
+  Checkbox,
+  Divider,
+  MenuItem,
 } from "@mantine/core";
 import { type ReactNode, useState } from "react";
 import {
@@ -19,13 +39,13 @@ import {
   IconListLetters,
   IconNumber123,
   IconPlus,
-  IconTrash
+  IconTrash,
 } from "@tabler/icons-react";
 import { RuleEditor } from "./RuleEditor";
-import {   renderSelectOption, FieldDefaultEditor, ruleLabels } from "../App";
+import { renderSelectOption, FieldDefaultEditor, ruleLabels } from "../App";
 export type FieldEditorProps = {
-  field: ValueType<DBType, AxType>;
-  onSave: (field: ValueType<DBType, AxType>) => void;
+  field: ValueType<AxTypes>;
+  onSave: (field: ValueType<AxTypes>) => void;
 };
 export function FieldEditor({ field, onSave }: FieldEditorProps) {
   const [newEnum, setNewEnum] = useState<{
@@ -44,38 +64,60 @@ export function FieldEditor({ field, onSave }: FieldEditorProps) {
         value={field.name}
         onChange={(e) => {
           onSave({ ...field, name: e.currentTarget.value });
-        }} />
+        }}
+      />
 
       <TextInput
         size="xl"
         label="表示名"
         placeholder="表示名"
-        value={field.label}
+        value={field.meta.label}
         onChange={(e) => {
-          onSave({ ...field, label: e.currentTarget.value });
-        }} />
+          onSave({
+            ...field,
+            meta: { ...field.meta, label: e.currentTarget.value },
+          });
+        }}
+      />
 
       <Select
-        value={field.axType.id}
+        value={field.axType}
         onChange={(value) => {
-          let axType: AxType = AxTypes[value as keyof typeof AxTypes];
+          let typeParams = {};
           if (value === "Enum") {
-            axType = AxTypeBuilders.enum([]);
+            typeParams = {
+              name: "",
+              entries: [],
+            } satisfies AxTypesWithProperties["Enum"];
           } else if (value === "Array") {
-            axType = AxTypeBuilders.array(AxTypes.string);
+            typeParams = {
+              of: "string",
+            } satisfies AxTypesWithProperties["Array"];
           }
-          onSave({ ...field, axType: axType });
+          onSave({ ...field, axType: value as AxTypes, typeParams });
         }}
-        leftSection={fieldTypesSelectData.find(e=>e.value===field.axType.id)?.icon}
+        leftSection={
+          fieldTypesSelectData.find((e) => e.value === field.axType)?.icon
+        }
         label="種類"
         placeholder="種類"
         allowDeselect={false}
         size="md"
         data={fieldTypesSelectData}
-        renderOption={renderSelectOption} />
-      {field.axType.id === "Enum" && (
+        renderOption={renderSelectOption}
+      />
+      {checkFieldType(field, "Enum") && (
         <Box ml={20}>
-          {field.axType.entries.map((e) => (
+          <TextInput label="選択肢グループの名前" value={field.typeParams.name} onChange={(e)=>{
+            onSave({
+              ...field,
+              typeParams: {
+                ...field.typeParams,
+                name: e.currentTarget.value
+              }
+            })
+          }}/>
+          {field.typeParams.entries.map((e) => (
             <Text key={e.value}>
               {e.value} {e.label}
             </Text>
@@ -89,7 +131,8 @@ export function FieldEditor({ field, onSave }: FieldEditorProps) {
               }}
               style={{
                 flexGrow: 1,
-              }} />
+              }}
+            />
             <TextInput
               placeholder="新しい表示名"
               value={newEnum.label}
@@ -98,26 +141,34 @@ export function FieldEditor({ field, onSave }: FieldEditorProps) {
               }}
               style={{
                 flexGrow: 1,
-              }} />
+              }}
+            />
             <ActionIcon
               variant="transparent"
               onClick={() => {
-                if (field.axType.id !== "Enum" ||
+                if (
+                  field.axType !== "Enum" ||
                   newEnum.value === "" ||
-                  field.axType.entries
+                  field.typeParams.entries
                     .map((e) => e.value)
-                    .includes(newEnum.value)) {
+                    .includes(newEnum.value)
+                ) {
                   return;
                 }
+                console.log(field.typeParams.entries);
+
                 onSave({
                   ...field,
-                  axType: AxTypeBuilders.enum([
-                    ...field.axType.entries,
-                    {
-                      ...newEnum,
-                      label: newEnum.label !== "" ? newEnum.label : undefined,
-                    },
-                  ]),
+                  typeParams: {
+                    ...field.typeParams,
+                    entries: [
+                      ...field.typeParams.entries,
+                      {
+                        value: newEnum.value,
+                        label: newEnum.label !== "" ? newEnum.label : undefined,
+                      },
+                    ],
+                  },
                 });
                 setNewEnum({ value: "", label: "" });
               }}
@@ -127,35 +178,39 @@ export function FieldEditor({ field, onSave }: FieldEditorProps) {
           </Group>
         </Box>
       )}
-      {field.axType.id === "Array" && (
+      {checkFieldType(field, "Array") && (
         <Select
-        
-          value={field.axType.of.id}
+          value={field.typeParams.of}
           onChange={(value) => {
             onSave({
               ...field,
-              axType: AxTypeBuilders.array(
-                AxTypes[value as keyof typeof AxTypes]
-              ),
+              typeParams: AxTypeBuilders.array(value as AxTypes),
             });
           }}
-          leftSection={fieldTypesSelectData.find(e=>e.value===field.axType.id)?.icon}
+          leftSection={
+            fieldTypesSelectData.find((e) => e.value === field.axType)?.icon
+          }
           label="リストの種類"
           placeholder="リストの種類"
           allowDeselect={false}
           size="md"
           data={fieldTypesSelectData.filter(
-            (e) => e.value !== "Array" && e.value !== "Enum"
+            (e) => e.value !== "Array" && e.value !== "Enum",
           )}
-          renderOption={renderSelectOption} />
+          renderOption={renderSelectOption}
+        />
       )}
       <Textarea
         label="説明"
         description="フィールドの説明"
-        value={field.description}
+        value={field.meta.description}
         onChange={(e) => {
-          onSave({ ...field, description: e.currentTarget.value });
-        }} />
+          onSave({
+            ...field,
+            meta: { ...field.meta, description: e.currentTarget.value },
+          });
+        }}
+      />
 
       <FieldDefaultEditor
         key={field._id}
@@ -163,7 +218,8 @@ export function FieldEditor({ field, onSave }: FieldEditorProps) {
         value={field.default}
         onChange={(v) => {
           onSave({ ...field, default: v });
-        }} />
+        }}
+      />
       <Stack my={20}>
         <Checkbox
           label="「空」を許可"
@@ -172,7 +228,8 @@ export function FieldEditor({ field, onSave }: FieldEditorProps) {
           onChange={(e) => {
             onSave({ ...field, optional: e.currentTarget.checked });
           }}
-          disabled={field.id} />
+          disabled={field.id}
+        />
         <Checkbox
           label="IDとして指定"
           description="IDとして使用する場合はチェックしてください。"
@@ -180,7 +237,8 @@ export function FieldEditor({ field, onSave }: FieldEditorProps) {
           onChange={(e) => {
             onSave({ ...field, id: e.currentTarget.checked });
           }}
-          disabled={field.optional} />
+          disabled={field.optional}
+        />
         <Checkbox
           label="ユニークな値"
           description="値が一意であることを保証します。"
@@ -188,29 +246,38 @@ export function FieldEditor({ field, onSave }: FieldEditorProps) {
           onChange={(e) => {
             onSave({ ...field, unique: e.currentTarget.checked });
           }}
-          disabled={field.id} />
+          disabled={field.id}
+        />
         <Divider />
         <Checkbox
           label="変更禁止"
           description="Axcelからの変更を禁止します。"
-          checked={field.readonly}
+          checked={field.meta.readonly}
           onChange={(e) => {
-            onSave({ ...field, readonly: e.currentTarget.checked });
-          }} />
+            onSave({
+              ...field,
+              meta: { ...field.meta, readonly: e.currentTarget.checked },
+            });
+          }}
+        />
         <Checkbox
           label="非表示"
           description="Axcelから見えなくします。"
-          checked={field.invisible}
+          checked={field.meta.invisible}
           onChange={(e) => {
-            onSave({ ...field, invisible: e.currentTarget.checked });
-          }} />
+            onSave({
+              ...field,
+              meta: { ...field.meta, invisible: e.currentTarget.checked },
+            });
+          }}
+        />
       </Stack>
       <Box>
         <Text fw={700}>入力規則</Text>
         <Text size="sm" c={"dimmed"}>
           入力のルールを設定します。
         </Text>
-        {field.rules.map((rule) => (
+        {field.meta.rules.map((rule) => (
           <Box key={rule.ruleName}>
             <Group justify="space-between">
               <Stack gap={0}>
@@ -224,9 +291,12 @@ export function FieldEditor({ field, onSave }: FieldEditorProps) {
                 onClick={() => {
                   onSave({
                     ...field,
-                    rules: field.rules.filter(
-                      (r) => r.ruleName !== rule.ruleName
-                    ),
+                    meta: {
+                      ...field.meta,
+                      rules: field.meta.rules.filter(
+                        (r) => r.ruleName !== rule.ruleName,
+                      ),
+                    },
                   });
                 }}
               >
@@ -241,10 +311,15 @@ export function FieldEditor({ field, onSave }: FieldEditorProps) {
 
                   onSave({
                     ...field,
-                    rules: field.rules.map((rr) => rr.ruleName === r.ruleName ? r : rr
-                    ),
+                    meta: {
+                      ...field.meta,
+                      rules: field.meta.rules.map((rr) =>
+                        rr.ruleName === r.ruleName ? r : rr,
+                      ),
+                    },
                   });
-                }} />
+                }}
+              />
               <Divider />
             </Stack>
           </Box>
@@ -257,28 +332,31 @@ export function FieldEditor({ field, onSave }: FieldEditorProps) {
           </Menu.Target>
           <Menu.Dropdown>
             {Object.entries(ruleLabels)
-              .filter(([k, v]) => v.jsType === field.axType.js)
+              .filter(([k, v]) => v.jsType === getAxTypeData(field.axType).js)
               .map(([k, rule]) => (
                 <MenuItem
                   key={rule.name}
-                  disabled={field.rules
+                  disabled={field.meta.rules
                     .map((r) => r.ruleName)
                     .includes(k as Rules["ruleName"])}
                   onClick={() => {
                     onSave({
                       ...field,
-                      rules: [
-                        ...field.rules,
-                        {
-                          ruleName: k as Rules["ruleName"],
-                          jsType: field.axType.js,
-                          params: Object.fromEntries(
-                            RuleParams[k as keyof typeof RuleParams].map(
-                              (p) => [p, undefined]
-                            )
-                          ),
-                        } as Rules,
-                      ],
+                      meta: {
+                        ...field.meta,
+                        rules: [
+                          ...field.meta.rules,
+                          {
+                            ruleName: k as Rules["ruleName"],
+                            jsType: getAxTypeData(field.axType).js,
+                            params: Object.fromEntries(
+                              RuleParams[k as keyof typeof RuleParams].map(
+                                (p) => [p, undefined],
+                              ),
+                            ),
+                          } as Rules,
+                        ],
+                      },
                     });
                   }}
                 >
@@ -328,11 +406,6 @@ export const fieldTypesSelectData: {
     icon: <IconCalendar />,
   },
   {
-    value: "datetime",
-    label: "日時",
-    icon: <IconCalendarTime />,
-  },
-  {
     value: "Array",
     label: "リスト",
     icon: <IconList />,
@@ -342,4 +415,8 @@ export const fieldTypesSelectData: {
     label: "選択",
     icon: <IconListLetters />,
   },
-];
+] satisfies Array<{
+  value: AxTypes;
+  label: string;
+  icon?: ReactNode;
+}>;

@@ -1,4 +1,4 @@
-import type { AxType, AxTypes, DBType, JSType } from "./Types";
+import type { AxTypeDatas, DBType, JSType } from "./Types";
 
 export type RuleBase<T extends Lowercase<string>, JST extends JSType, R extends {}> = {
 	ruleName: T;
@@ -15,7 +15,7 @@ export type RulesOfJSType<T extends JSType> = Extract<
 
 export type LengthRule = RuleBase<
 	"length",
-	typeof AxTypes.string.js,
+	typeof AxTypeDatas.string.js,
 	{
 		minLength?: number;
 		maxLength?: number;
