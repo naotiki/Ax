@@ -1,13 +1,5 @@
 {
   "name": "axcel2",
-  "module": "index.ts",
-  "type": "module",
-  "workspaces": ["packages/*"],
-  "devDependencies": {
-    "@biomejs/biome": "1.6.1",
-    "@types/bun": "latest"
-  },
-  "peerDependencies": {
-    "typescript": "^5.0.0"
-  }
+  "private": true,
+  "workspaces": ["packages/*"]
 }

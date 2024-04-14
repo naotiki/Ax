@@ -1,4 +1,4 @@
-# axcel2
+# Ax
 
 To install dependencies:
 
