@@ -21,11 +21,20 @@ export const PrismaSchemaGenerator = (models: ModelType[], headerContents: strin
         write(`model ${model.name} {\n`);
         for (const field of model.fields) {
             if (field.fieldType === "value") {
+                let typeName:string = getAxTypeData(field.axType).db
                 if (checkFieldType(field, "Enum")) {
-                    //TODO
+                    //Enum名の重複チェック
+                    if(models.filter(m=>m.fields.find(f=>f.fieldType==="value"&&checkFieldType(f,"Enum")&&f.typeParams.name===field.typeParams.name)).length>1){
+                        throw new Error(`Enum Name Duplication Error: ${field.typeParams.name}`)
+                    }
+                    typeName = field.typeParams.name;
+                    let str = `enum ${typeName} {\n\t`;
+                    str += field.typeParams.entries.map(v => `${v.value}`).join("\n\t");
+                    str += "\n}\n";
+                    addContents.push(str);
                 }
 
-                write(`\t${field.name}   ${getAxTypeData(field.axType).db}${field.optional ? "?" : ""}`);
+                write(`\t${field.name}   ${typeName}${field.optional ? "?" : ""}`);
                 if (field.id) {
                     write(" @id");
                 }

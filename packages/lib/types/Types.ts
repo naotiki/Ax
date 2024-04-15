@@ -36,8 +36,13 @@ export type AxTypesWithProperties = {
 		of: AxTypes
 	}
 	Enum: {
-		name:string;
-		entries: { value: string; label?: string }[]
+		name: string;
+		entries: {
+			value: string;
+			meta:{
+				label?: string
+			}
+		}[]
 	}
 }
 export type AxTypeDetail<A extends AxTypes> = (typeof AxTypeDatas)[A]

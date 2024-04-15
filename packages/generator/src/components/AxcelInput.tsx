@@ -31,7 +31,7 @@ export const AxcelInput = ({
         rightSectionWidth={"auto"}
         data={field.typeParams.entries.map((e) => ({
           value: e.value,
-          label: e.label ?? e.value,
+          label: e.meta.label ?? e.value,
         }))}
         value={value ?? ""}
         onChange={(e) => onValueChange(e)}

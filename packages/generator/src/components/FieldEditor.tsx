@@ -119,7 +119,7 @@ export function FieldEditor({ field, onSave }: FieldEditorProps) {
           }}/>
           {field.typeParams.entries.map((e) => (
             <Text key={e.value}>
-              {e.value} {e.label}
+              {e.value} {e.meta.label}
             </Text>
           ))}
           <Group wrap="nowrap" gap={0}>
@@ -165,8 +165,10 @@ export function FieldEditor({ field, onSave }: FieldEditorProps) {
                       ...field.typeParams.entries,
                       {
                         value: newEnum.value,
-                        label: newEnum.label !== "" ? newEnum.label : undefined,
-                      },
+                        meta:{
+                          label: newEnum.label !== "" ? newEnum.label : undefined,
+                        }
+                      } satisfies AxTypesWithProperties["Enum"]["entries"][number],
                     ],
                   },
                 });
