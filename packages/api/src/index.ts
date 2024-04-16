@@ -1,7 +1,8 @@
 import { $ } from "bun";
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
-import { ModelValidator, PrismaSchemaGenerator, type ModelType } from 'lib'
+import { ModelValidator, PrismaSchemaGenerator, type ModelType } from 'ax'
+import { createBunWebSocket } from "hono/bun";
 import { diff, flattenChangeset } from 'json-diff-ts';
 const app = new Hono()
 const headerContents = `
@@ -15,15 +16,24 @@ generator client {
 }
 `
 app.use(cors())
-let oldModels: ModelType[] = []
-app.get("/diff",async (c)=>{
-  const models = await c.req.json<ModelType[]>()
-  const result = diff([], models, )
-  return c.json(result)
+const dataDir = "../../.axcel/"
+const schemaFile=Bun.file(`${dataDir}schema.json`)
+app.get("/api/ax/schema", async (c) => {
+  if (await schemaFile.exists()) {
+    return c.json<ModelType[]>(await schemaFile.json())
+  }
+  return c.json<ModelType[]>([])
 })
-app.post('/migrate', async (c) => {
+
+app.get("/api/ax/diff", async (c) => {
   const models = await c.req.json<ModelType[]>()
-  const r = diff(oldModels,models,)
+  const result = diff([], models,)
+  return c.json(result)
+});
+
+app.post('/api/ax/migrate', async (c) => {
+  const models = await c.req.json<ModelType[]>()
+  const r = diff(oldModels, models,)
   oldModels = models
   return c.json(flattenChangeset(r))
   const errors = await ModelValidator(models)
@@ -42,6 +52,6 @@ app.post('/migrate', async (c) => {
 
 
 export default {
-  port: 8080,
+  port: 7001,
   fetch: app.fetch,
-} 
+}

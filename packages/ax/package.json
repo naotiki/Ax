@@ -1,0 +1,9 @@
+{
+  "name": "ax",
+  "version": "0.0.0",
+  "type": "module",
+  "main": "index.ts",
+  "dependencies": {
+    "json-diff-ts": "^2.2.1"
+  }
+}

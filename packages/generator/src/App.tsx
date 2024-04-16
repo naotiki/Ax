@@ -12,7 +12,7 @@ import {
   type AxTypes,
   getAxTypeData,
   ModelValidator,
-} from "lib";
+} from "ax";
 import {
   AppShell,
   Burger,
@@ -57,7 +57,7 @@ import { AxcelInput } from "./components/AxcelInput";
 import { FieldEditor, fieldTypesSelectData } from "./components/FieldEditor";
 import { RelationEditor } from "./components/RelationEditor";
 import { nanoid } from "nanoid";
-import type { ModelValidateError } from "lib/ModelValidator";
+import type { ModelValidateError } from "ax/ModelValidator";
 
 const theme = createTheme({
   defaultGradient: {

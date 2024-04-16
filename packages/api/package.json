@@ -9,7 +9,7 @@
     "hono": "^4.2.3",
     "json-diff": "^1.0.6",
     "json-diff-ts": "^2.2.1",
-    "lib": "workspace:*"
+    "ax": "workspace:*"
   },
   "devDependencies": {
     "@types/bun": "latest",

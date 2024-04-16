@@ -19,7 +19,7 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
-    "types": ["lib/types"]
+    "types": ["ax/types"]
   },
   "include": ["src"],
   "references": [{ "path": "./tsconfig.node.json" }]

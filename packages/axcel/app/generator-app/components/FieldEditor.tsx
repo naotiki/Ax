@@ -1,15 +1,11 @@
 import {
-  AxTypeDatas,
   type AxTypes,
   AxTypeBuilders,
   type Rules,
   RuleParams,
-  type DBType,
   type ValueType,
   checkFieldType,
   getAxTypeData,
-  AxTypeData,
-  AxTypeDetail,
   type AxTypesWithProperties,
 } from "ax";
 import {
@@ -31,7 +27,6 @@ import {
 import { type ReactNode, useState } from "react";
 import {
   IconCalendar,
-  IconCalendarTime,
   IconCheckbox,
   IconDecimal,
   IconLetterCase,
@@ -42,7 +37,8 @@ import {
   IconTrash,
 } from "@tabler/icons-react";
 import { RuleEditor } from "./RuleEditor";
-import { renderSelectOption, FieldDefaultEditor, ruleLabels } from "../App";
+import { renderSelectOption, ruleLabels } from "../AxEditor";
+import { FieldDefaultEditor } from "./FieldDefaultEditor";
 export type FieldEditorProps = {
   field: ValueType<AxTypes>;
   onSave: (field: ValueType<AxTypes>) => void;

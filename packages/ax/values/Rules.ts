@@ -1,4 +1,4 @@
-import type { Rules } from "./types/Rules";
+import type { Rules } from "../types/Rules";
 export const GenerateRules = {
     length: (min: number, max: number) => {
         return {

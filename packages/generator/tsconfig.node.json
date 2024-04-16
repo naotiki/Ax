@@ -6,7 +6,7 @@
     "moduleResolution": "bundler",
     "allowSyntheticDefaultImports": true,
     "strict": true,
-    "types": ["lib/types"]
+    "types": ["ax/types"]
   },
   "include": ["vite.config.ts"]
 }

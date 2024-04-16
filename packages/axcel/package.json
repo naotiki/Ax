@@ -1,0 +1,44 @@
+{
+  "name": "axcel",
+  "private": true,
+  "sideEffects": false,
+  "type": "module",
+  "scripts": {
+    "build": "remix vite:build",
+    "dev": "remix vite:dev",
+    "start": "remix-serve ./build/server/index.js",
+    "typecheck": "tsc"
+  },
+  "dependencies": {
+    "@mantine/core": "^7.8.0",
+    "@mantine/dates": "^7.8.0",
+    "@mantine/form": "^7.8.0",
+    "@mantine/hooks": "^7.8.0",
+    "@remix-run/node": "^2.8.1",
+    "@remix-run/react": "^2.8.1",
+    "@remix-run/serve": "^2.8.1",
+    "@tabler/icons-react": "^3.2.0",
+    "dayjs": "^1.11.10",
+    "isbot": "^4.1.0",
+    "ax": "workspace:*",
+    "nanoid": "^5.0.7",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "remix-utils": "^7.6.0",
+    "json-diff-ts": "^2.2.1"
+  },
+  "devDependencies": {
+    "@remix-run/dev": "^2.8.1",
+    "@types/react": "^18.2.20",
+    "@types/react-dom": "^18.2.7",
+    "postcss": "^8.4.38",
+    "postcss-preset-mantine": "^1.14.4",
+    "postcss-simple-vars": "^7.0.1",
+    "typescript": "^5.1.6",
+    "vite": "^5.1.0",
+    "vite-tsconfig-paths": "^4.2.1"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

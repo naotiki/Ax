@@ -5,7 +5,7 @@ export * from "./types/Types";
 export * from "./types/Utils";
 
 export * from "./values/DefaultValueProviders";
-export * from "./Rules";
+export * from "./values/Rules";
 import { checkFieldType, type ValueType } from "./types/Field";
 export { checkFieldType };
 import { ModelValidator } from "./ModelValidator";
