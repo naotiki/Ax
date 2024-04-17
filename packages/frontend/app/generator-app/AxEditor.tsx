@@ -4,7 +4,7 @@ import {
   type Rules,
   type JSType,
   ModelValidator,
-} from "ax";
+} from "lib";
 import {
   AppShell,
   Burger,
@@ -28,7 +28,7 @@ import {
 } from "@tabler/icons-react";
 import { fieldTypesSelectData } from "./components/FieldEditor";
 import { nanoid } from "nanoid";
-import type { ModelValidateError } from "ax/ModelValidator";
+import type { ModelValidateError } from "lib/functions/ModelValidator";
 import { ModelEditor } from "./components/ModelEditor";
 
 type EditLevel = "develop" | "safety" | "onlyAxcel"
@@ -92,7 +92,7 @@ export function AxEditor(props:EditorProps) {
                       </Badge>
 
                       <Button disabled={!errors || errors.length > 0} onClick={()=>{
-                        fetch("http://localhost:3000/api/migrate", {
+                        fetch("http://localhost:8080/api/lib/migrate", {
                           method: "POST",
                           body: JSON.stringify(models),
                         })

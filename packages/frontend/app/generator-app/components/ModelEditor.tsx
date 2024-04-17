@@ -1,4 +1,4 @@
-import { DefaultValueProviders, type ModelType } from "ax";
+import { DefaultValueProviders, type ModelType } from "lib";
 import {
   Title,
   Group,

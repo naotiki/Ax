@@ -6,7 +6,7 @@ import {
   TextInput,
 } from "@mantine/core";
 import { DatePickerInput, DateTimePicker } from "@mantine/dates";
-import { type LengthRule, type RangeRule, type ValueType, type AxTypes, getAxTypeData, checkFieldType } from "ax";
+import { type LengthRule, type RangeRule, type ValueType, type AxTypes, getAxTypeData, checkFieldType } from "lib";
 
 type AxcelInputProps = {
   field: ValueType<AxTypes>;

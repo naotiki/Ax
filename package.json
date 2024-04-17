@@ -2,6 +2,9 @@
   "name": "axcel2",
   "private": true,
   "workspaces": ["packages/*"],
+  "scripts": {
+    "dev":"bun run --filter '*' dev"
+  },
   "devDependencies": {
     "prisma": "^5.12.1"
   },

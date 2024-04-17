@@ -1,4 +1,4 @@
-import type { AxTypes, ModelType, RelationType, ValueType } from "ax";
+import type { AxTypes, ModelType, RelationType, ValueType } from "lib";
 import { Box, Select, TextInput, Title } from "@mantine/core";
 import type { FC } from "react";
 

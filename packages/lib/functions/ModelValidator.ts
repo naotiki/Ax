@@ -1,6 +1,6 @@
-import { checkFieldType, type FieldTypes, type ValueType } from "./types/Field";
-import type { ModelType } from "./types/Model";
-import type { AxTypes } from "./types/Types";
+import { checkFieldType, type FieldTypes, type ValueType } from "../types/Field";
+import type { ModelType } from "../types/Model";
+import type { AxTypes } from "../types/Types";
 export type ModelValidateError = {
     modelId: string;
     fieldId?: string;

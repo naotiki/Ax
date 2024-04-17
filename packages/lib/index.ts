@@ -8,7 +8,7 @@ export * from "./values/DefaultValueProviders";
 export * from "./values/Rules";
 import { checkFieldType, type ValueType } from "./types/Field";
 export { checkFieldType };
-import { ModelValidator } from "./ModelValidator";
+import { ModelValidator } from "./functions/ModelValidator";
 import type { ModelType } from "./types/Model";
 import { getAxTypeData, type AxTypes } from "./types/Types";
 import { toCamelCase } from "../generator/src/utils/CaseUtils";

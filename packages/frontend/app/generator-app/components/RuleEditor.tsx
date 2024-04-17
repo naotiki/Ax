@@ -1,5 +1,5 @@
 import { NumberInput, TextInput } from "@mantine/core";
-import type { RegexRule, Rules } from "ax";
+import type { RegexRule, Rules } from "lib";
 import type { FC } from "react";
 type RuleEditorProps = {
   rule: Rules;

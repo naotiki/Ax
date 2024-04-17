@@ -1,5 +1,5 @@
 {
-  "name": "axcel",
+  "name": "frontend",
   "private": true,
   "sideEffects": false,
   "type": "module",
@@ -20,7 +20,7 @@
     "@tabler/icons-react": "^3.2.0",
     "dayjs": "^1.11.10",
     "isbot": "^4.1.0",
-    "ax": "workspace:*",
+    "lib": "workspace:*",
     "nanoid": "^5.0.7",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",

@@ -4,7 +4,7 @@ import {
   DefaultValueProviders,
   type FieldDefault, type AxTypes,
   getAxTypeData
-} from "ax";
+} from "lib";
 import {
   Group, Select, ActionIcon,
   Radio, Box
