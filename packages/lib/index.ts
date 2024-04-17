@@ -11,7 +11,7 @@ export { checkFieldType };
 import { ModelValidator } from "./functions/ModelValidator";
 import type { ModelType } from "./types/Model";
 import { getAxTypeData, type AxTypes } from "./types/Types";
-import { toCamelCase } from "../generator/src/utils/CaseUtils";
+import { toCamelCase } from "../frontend/app/generator-app/utils/CaseUtils";
 export { ModelValidator };
 
 export const PrismaSchemaGenerator = (models: ModelType[], headerContents: string, write: (s: string) => void) => {
