@@ -20,20 +20,20 @@ app.get("/api/a", async (c) => {
 })
 const dataDir = "../../.axcel/"
 const schemaFile=Bun.file(`${dataDir}schema.json`)
-app.get("/api/lib/schema", async (c) => {
+app.get("/api/ax/schema", async (c) => {
   if (await schemaFile.exists()) {
     return c.json<ModelType[]>(await schemaFile.json())
   }
   return c.json<ModelType[]>([])
 })
 
-app.get("/api/lib/diff", async (c) => {
+app.get("/api/ax/diff", async (c) => {
   const models = await c.req.json<ModelType[]>()
   const result = diff([], models,)
   return c.json(result)
 });
 let oldModels: ModelType[] = []
-app.post('/api/lib/migrate', async (c) => {
+app.post('/api/ax/migrate', async (c) => {
   const models = await c.req.json<ModelType[]>()
   const r = diff(oldModels, models,)
   oldModels = models

@@ -3,13 +3,15 @@
   "private": true,
   "workspaces": ["packages/*"],
   "scripts": {
-    "dev":"bun run --filter '*' dev"
+    "dev": "bun run --filter '*' dev",
+    "yws": "PORT=1234 YPERSISTENCE=./y_db bunx y-websocket-server"
   },
   "devDependencies": {
     "prisma": "^5.12.1"
   },
   "dependencies": {
     "@prisma/client": "^5.12.1",
-    "json-diff-ts": "^2.2.1"
+    "json-diff-ts": "^2.2.1",
+    "y-websocket": "^2.0.2"
   }
 }
