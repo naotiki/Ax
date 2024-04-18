@@ -51,7 +51,7 @@ export function FieldEditor({ field, onSave }: FieldEditorProps) {
   return (
     <Box>
       <Title order={3} my={10}>
-        フィールド編集
+        カラム編集
       </Title>
       <TextInput
         size="xl"
@@ -200,7 +200,7 @@ export function FieldEditor({ field, onSave }: FieldEditorProps) {
       )}
       <Textarea
         label="説明"
-        description="フィールドの説明"
+        description="カラムの説明"
         value={field.meta.description}
         onChange={(e) => {
           onSave({

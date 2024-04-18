@@ -1,10 +1,4 @@
-
-import {
-  type ModelType,
-  type Rules,
-  type JSType,
-  ModelValidator,
-} from "lib";
+import { type ModelType, type Rules, type JSType, ModelValidator } from "lib";
 import {
   AppShell,
   Burger,
@@ -23,24 +17,23 @@ import {
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { useEffect, useState } from "react";
-import {
-  IconSearch,
-} from "@tabler/icons-react";
+import { IconSearch } from "@tabler/icons-react";
 import { fieldTypesSelectData } from "./components/FieldEditor";
 import { nanoid } from "nanoid";
 import type { ModelValidateError } from "lib/functions/ModelValidator";
 import { ModelEditor } from "./components/ModelEditor";
-
-type EditLevel = "develop" | "safety" | "onlyAxcel"
+                  //全変更可, テーブル+カラム追加+Axcel, Axcelのみ
+const EditLevel = ["develop", "safety", "onlyAxcel"] as const;
+type EditLevel = typeof EditLevel[number];
 
 type EditorProps = {
   headerLeftSection?: React.ReactNode;
   headerRightSection?: React.ReactNode;
-  initialModels:ModelType[];
-  allowEditMode:EditLevel;
-}
+  initialModels: ModelType[];
+  allowEditMode: EditLevel;
+};
 
-export function AxEditor(props:EditorProps) {
+export function AxEditor(props: EditorProps) {
   const [opened, { toggle }] = useDisclosure();
   const [models, setModels] = useState(props.initialModels);
   const [errors, setErrors] = useState<ModelValidateError[] | null>(null);
@@ -58,151 +51,154 @@ export function AxEditor(props:EditorProps) {
   return (
     <>
       {/* <MantineProvider theme={theme} defaultColorScheme="dark"> */}
-        <AppShell
-          header={{ height: 60 }}
-          navbar={{
-            width: 300,
-            breakpoint: "sm",
-            collapsed: { mobile: !opened },
-          }}
-          padding="md"
-        >
-          <AppShell.Header>
-            <Group h="100%" px="md">
-              <Burger
-                opened={opened}
-                onClick={toggle}
-                hiddenFrom="sm"
-                size="sm"
-              />
-              <Title order={1} ><i>Axcel Editor</i></Title>
-              {props.headerLeftSection}
-              <Space style={{ flexGrow: 1 }} />
-              {props.headerRightSection}
-              {errors ? (
-                <HoverCard shadow="md">
-                  <HoverCard.Target>
-                    <Group>
-                      <Badge
-                        size="xl"
-                        circle
-                        color={errors.length > 0 ? "red" : "green"}
-                      >
-                        {errors.length}
-                      </Badge>
+      <AppShell
+        header={{ height: 60 }}
+        navbar={{
+          width: 300,
+          breakpoint: "sm",
+          collapsed: { mobile: !opened },
+        }}
+        padding="md"
+      >
+        <AppShell.Header>
+          <Group h="100%" px="md">
+            <Burger
+              opened={opened}
+              onClick={toggle}
+              hiddenFrom="sm"
+              size="sm"
+            />
+            <Title order={1}>
+              <i>Axcel Editor</i>
+            </Title>
+            {props.headerLeftSection}
+            <Space style={{ flexGrow: 1 }} />
+            {props.headerRightSection}
+            {errors ? (
+              <HoverCard shadow="md">
+                <HoverCard.Target>
+                  <Group>
+                    <Badge
+                      size="xl"
+                      circle
+                      color={errors.length > 0 ? "red" : "green"}
+                    >
+                      {errors.length}
+                    </Badge>
 
-                      <Button disabled={!errors || errors.length > 0} onClick={()=>{
+                    <Button
+                      disabled={!errors || errors.length > 0}
+                      onClick={() => {
                         fetch("http://localhost:8080/api/lib/migrate", {
                           method: "POST",
                           body: JSON.stringify(models),
-                        })
-                      }}>
-                        変更を適用
-                      </Button>
-                    </Group>
-                  </HoverCard.Target>
-                  <HoverCard.Dropdown>
-                    <Center>
-                      <IconSearch />
-                      <Title order={5}>見つかったエラー</Title>
-                    </Center>
-                    {errors.length > 0 ? (
-                      errors.map((error) => (
-                        <Notification
-                          key={error.error + error.modelId + error.fieldId}
-                          color="red"
-                          withCloseButton={false}
-                          title={(() => {
-                            const model = models.find(
-                              (m) => m._id === error.modelId,
+                        });
+                      }}
+                    >
+                      変更を適用
+                    </Button>
+                  </Group>
+                </HoverCard.Target>
+                <HoverCard.Dropdown>
+                  <Center>
+                    <IconSearch />
+                    <Title order={5}>見つかったエラー</Title>
+                  </Center>
+                  {errors.length > 0 ? (
+                    errors.map((error) => (
+                      <Notification
+                        key={error.error + error.modelId + error.fieldId}
+                        color="red"
+                        withCloseButton={false}
+                        title={(() => {
+                          const model = models.find(
+                            (m) => m._id === error.modelId,
+                          );
+                          const modelName =
+                            model?.meta?.label ?? model?.name ?? "不明";
+                          if (error.fieldId) {
+                            const field = model?.fields.find(
+                              (f) => f._id === error.fieldId,
                             );
-                            const modelName =
-                              model?.meta?.label ?? model?.name ?? "不明";
-                            if (error.fieldId) {
-                              const field = model?.fields.find(
-                                (f) => f._id === error.fieldId,
-                              );
-                              return `${modelName} > ${
-                                field?.meta?.label ?? field?.name ?? "不明"
-                              }`;
-                            }
-                            return modelName;
-                          })()}
-                          onClick={() => {
-                            setSelectedModelId(error.modelId);
-                          }}
-                        >
-                          {error.error}
-                        </Notification>
-                      ))
-                    ) : (
-                      <Text size="md">エラーはありません</Text>
-                    )}
-                  </HoverCard.Dropdown>
-                </HoverCard>
-              ) : (
-                <Loader />
-              )}
-            </Group>
-          </AppShell.Header>
-          <AppShell.Navbar p="md">
-            <AppShell.Section>
-              <Title order={3}>モデル</Title>
-            </AppShell.Section>
-            <AppShell.Section>
-              <Stack my={"md"} gap={"sm"}>
-                {models.map((model) => (
-                  <Button
-                    key={model._id}
-                    fullWidth
-                    variant={
-                      selectedModelId === model._id ? "outline" : "subtle"
-                    }
-                    onClick={() => {
-                      setSelectedModelId(model._id);
-                    }}
-                  >
-                    {model.meta.label}
-                  </Button>
-                ))}
-              </Stack>
-            </AppShell.Section>
-            <AppShell.Section>
-              <Button
-                fullWidth
-                onClick={() => {
-                  const id = nanoid();
-                  const m: ModelType = {
-                    _id: id,
-                    meta:{
-                      label:`新しいモデル ${id.slice(0, 4)}`,
-                      computedStyles: [],
-                    },
-                    name: `NewModel_${id.slice(0, 4)}`,
-                    fields: [],
-                  };
-                  setModels([...models, m]);
-                  setSelectedModelId(m._id);
-                }}
-              >
-                モデルを追加
-              </Button>
-            </AppShell.Section>
-          </AppShell.Navbar>
-          <AppShell.Main>
-            {selectedModel && (
-              <ModelEditor
-                model={selectedModel}
-                models={models}
-                onSave={(model) => {
-                  setModels((models) =>
-                    models.map((m) => (m._id === model._id ? model : m)),
-                  );
-                }}
-              />
+                            return `${modelName} > ${
+                              field?.meta?.label ?? field?.name ?? "不明"
+                            }`;
+                          }
+                          return modelName;
+                        })()}
+                        onClick={() => {
+                          setSelectedModelId(error.modelId);
+                        }}
+                      >
+                        {error.error}
+                      </Notification>
+                    ))
+                  ) : (
+                    <Text size="md">エラーはありません</Text>
+                  )}
+                </HoverCard.Dropdown>
+              </HoverCard>
+            ) : (
+              <Loader />
             )}
-          </AppShell.Main>
-        </AppShell>
+          </Group>
+        </AppShell.Header>
+        <AppShell.Navbar p="md">
+          <AppShell.Section>
+            <Title order={3}>テーブル</Title>
+          </AppShell.Section>
+          <AppShell.Section>
+            <Stack my={"md"} gap={"sm"}>
+              {models.map((model) => (
+                <Button
+                  key={model._id}
+                  fullWidth
+                  variant={selectedModelId === model._id ? "outline" : "subtle"}
+                  onClick={() => {
+                    setSelectedModelId(model._id);
+                  }}
+                >
+                  {model.meta.label}
+                </Button>
+              ))}
+            </Stack>
+          </AppShell.Section>
+          <AppShell.Section>
+            <Button
+              fullWidth
+              onClick={() => {
+                const id = nanoid();
+                const m: ModelType = {
+                  _id: id,
+                  meta: {
+                    label: `新しいテーブル ${id.slice(0, 4)}`,
+                    computedStyles: [],
+                  },
+                  name: `NewModel_${id.slice(0, 4)}`,
+                  fields: [],
+                };
+                setModels([...models, m]);
+                setSelectedModelId(m._id);
+              }}
+            >
+              テーブルを追加
+            </Button>
+          </AppShell.Section>
+        </AppShell.Navbar>
+        <AppShell.Main>
+          {selectedModel && (
+            <ModelEditor
+              model={selectedModel}
+              models={models}
+              onSave={(model) => {
+                setModels((models) =>
+                  models.map((m) => (m._id === model._id ? model : m)),
+                );
+              }}
+            />
+          )}
+        </AppShell.Main>
+      </AppShell>
       {/* </MantineProvider> */}
     </>
   );

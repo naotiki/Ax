@@ -2,12 +2,15 @@ import { DefaultValueProviders, type ModelType } from "lib";
 import {
   Title,
   Group,
-  Button, TextInput,
+  Button,
+  TextInput,
   Menu,
   Card,
   Text,
-  Container, ActionIcon,
-  Popover, Space
+  Container,
+  ActionIcon,
+  Popover,
+  Space,
 } from "@mantine/core";
 import { useState } from "react";
 import {
@@ -15,12 +18,14 @@ import {
   IconEdit,
   IconId,
   IconLink,
-  IconPlus, IconSort09,
-  IconTrash
+  IconPlus,
+  IconSort09,
+  IconTrash,
 } from "@tabler/icons-react";
 import { FieldEditor } from "./FieldEditor";
 import { RelationEditor } from "./RelationEditor";
 import { nanoid } from "nanoid";
+import { injectProps } from "../utils/InjectProps";
 type ModelEditorProps = {
   model: ModelType;
   models: ModelType[];
@@ -28,15 +33,22 @@ type ModelEditorProps = {
 };
 export function ModelEditor({ model, models, onSave }: ModelEditorProps) {
   const [selectedFieldId, setSelectedFieldId] = useState<string | null>(null);
-  const selectedField = selectedFieldId !== null
-    ? model.fields.find((f) => f._id === selectedFieldId)
-    : null;
+  const selectedField =
+    selectedFieldId !== null
+      ? model.fields.find((f) => f._id === selectedFieldId)
+      : null;
   return (
     <Group w={"100%"} h={"100%"} align="start">
       <Container my={"md"} style={{ flexGrow: 1 }}>
-        <Title order={3} my={10}>
-          モデル編集
-        </Title>
+        <Group justify="space-between">
+          <Title order={3} my={10}>
+            テーブル編集
+          </Title>
+          <Button color="red" {...injectProps()}>
+            <IconTrash />
+            削除
+          </Button>
+        </Group>
         <TextInput
           size="xl"
           label="名前"
@@ -44,16 +56,21 @@ export function ModelEditor({ model, models, onSave }: ModelEditorProps) {
           value={model.name}
           onChange={(e) => {
             onSave({ ...model, name: e.currentTarget.value });
-          }} />
+          }}
+        />
         <TextInput
           size="xl"
           label="表示名"
           placeholder="表示名"
           value={model.meta.label}
           onChange={(e) => {
-            onSave({ ...model, meta: { ...model.meta, label: e.currentTarget.value } });
-          }} />
-        <Title order={3}>フィールド</Title>
+            onSave({
+              ...model,
+              meta: { ...model.meta, label: e.currentTarget.value },
+            });
+          }}
+        />
+        <Title order={3}>カラム</Title>
         {model.fields.map((f) => (
           <Card
             shadow="sm"
@@ -74,7 +91,10 @@ export function ModelEditor({ model, models, onSave }: ModelEditorProps) {
                   <>
                     <IconCirclesRelation />
                     <Title order={3}>
-                      {models.find((m) => m._id === f.relation.modelId)?.meta?.label}
+                      {
+                        models.find((m) => m._id === f.relation.modelId)?.meta
+                          ?.label
+                      }
                     </Title>
                   </>
                 )}
@@ -103,7 +123,7 @@ export function ModelEditor({ model, models, onSave }: ModelEditorProps) {
                         onSave({
                           ...model,
                           fields: model.fields.filter(
-                            (field) => field._id !== f._id
+                            (field) => field._id !== f._id,
                           ),
                         });
                       }}
@@ -119,11 +139,11 @@ export function ModelEditor({ model, models, onSave }: ModelEditorProps) {
         <Menu shadow="md">
           <Menu.Target>
             <Button leftSection={<IconPlus />} fullWidth>
-              フィールドを追加
+              カラムを追加
             </Button>
           </Menu.Target>
           <Menu.Dropdown>
-            <Menu.Label>フィールドタイプ</Menu.Label>
+            <Menu.Label>カラムタイプ</Menu.Label>
             <Menu.Item
               leftSection={<IconEdit />}
               onClick={() => {
@@ -136,7 +156,7 @@ export function ModelEditor({ model, models, onSave }: ModelEditorProps) {
                       _id: id,
                       name: `NewField_${id.slice(0, 4)}`,
                       meta: {
-                        label: `新しいフィールド ${id.slice(0, 4)}`,
+                        label: `新しいカラム ${id.slice(0, 4)}`,
                         rules: [],
                         readonly: false,
                         invisible: false,
@@ -256,10 +276,12 @@ export function ModelEditor({ model, models, onSave }: ModelEditorProps) {
           onSave={(f) => {
             onSave({
               ...model,
-              fields: model.fields.map((field) => field._id === f._id ? f : field
+              fields: model.fields.map((field) =>
+                field._id === f._id ? f : field,
               ),
             });
-          }} />
+          }}
+        />
       )}
       {selectedField && selectedField.fieldType === "relation" && (
         <RelationEditor
@@ -268,10 +290,12 @@ export function ModelEditor({ model, models, onSave }: ModelEditorProps) {
           onSave={(f) => {
             onSave({
               ...model,
-              fields: model.fields.map((field) => field._id === f._id ? f : field
+              fields: model.fields.map((field) =>
+                field._id === f._id ? f : field,
               ),
             });
-          }} />
+          }}
+        />
       )}
     </Group>
   );

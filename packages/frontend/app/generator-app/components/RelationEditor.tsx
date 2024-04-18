@@ -56,7 +56,7 @@ export const RelationEditor: FC<RelationEditorProps> = ({
           });
         }}
         label="関連付け"
-        description="関連付けるモデルを選択してください"
+        description="関連付けるテーブルを選択してください"
         allowDeselect={false}
         data={
           field.relation.modelId
@@ -85,8 +85,8 @@ export const RelationEditor: FC<RelationEditorProps> = ({
             },
           });
         }}
-        label="参照フィールド"
-        description="モデルの特定に使われるフィールドを指定してください。フィールドはIDである必要があります。"
+        label="参照カラム"
+        description="テーブルの特定に使われるカラムを指定してください。カラムはIDである必要があります。"
         allowDeselect={false}
         data={otherModels
           .find((m) => m._id === field.relation.modelId)
@@ -108,8 +108,8 @@ export const RelationEditor: FC<RelationEditorProps> = ({
             },
           });
         }}
-        label="表示フィールド"
-        description="Axcel上で表示されるフィールドです。"
+        label="表示カラム"
+        description="Axcel上で表示されるカラムです。"
         allowDeselect
         data={otherModels
           .find((m) => m._id === field.relation.modelId)

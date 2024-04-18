@@ -22,17 +22,17 @@ export const ModelValidator = async (models: ModelType[]) => {
         }
     }
     for (const model of models) {
-        expect(Regexes.name.test(model.name), model, undefined, "モデル名が不正です");
+        expect(Regexes.name.test(model.name), model, undefined, "テーブル名が不正です");
         //modelNameの重複をチェック
         const sameNameModels = models.filter(m => m.name === model.name);
-        expect(sameNameModels.length === 1, model, undefined, "モデル名が重複しています");
-        //ModelにはIDフィールドが必要
-        expect(model.fields.find(f => f.fieldType==="value"&&f.id)!==undefined, model, undefined, "IDフィールドが存在しません");
+        expect(sameNameModels.length === 1, model, undefined, "テーブル名が重複しています");
+        //ModelにはIDカラムが必要
+        expect(model.fields.find(f => f.fieldType==="value"&&f.id)!==undefined, model, undefined, "IDカラムが存在しません");
         for (const field of model.fields) {
-            expect(Regexes.name.test(field.name), model, field, "フィールド名が不正です");
+            expect(Regexes.name.test(field.name), model, field, "カラム名が不正です");
             //fieldNameの重複をチェック
             const sameNameFields = model.fields.filter(f => f.name === field.name);
-            expect(sameNameFields.length === 1, model, field, "フィールド名が重複しています");
+            expect(sameNameFields.length === 1, model, field, "カラム名が重複しています");
             if (field.fieldType === "value") {
                 //ルールの破綻をチェック
                 for (const rule of field.meta.rules) {
@@ -69,7 +69,7 @@ export const ModelValidator = async (models: ModelType[]) => {
                         }
                     }
                 }
-                expect(!field.id || !field.optional, model, field, "IDフィールドは「空」を許可しない必要があります");
+                expect(!field.id || !field.optional, model, field, "IDカラムは「空」を許可しない必要があります");
                 //Enumの名前チェック
                 if (checkFieldType(field, "Enum")) {
                     expect(Regexes.name.test(field.typeParams.name), model, field, "選択肢グループ名が不正です");
@@ -82,12 +82,12 @@ export const ModelValidator = async (models: ModelType[]) => {
                     }
                 }
             } else if (field.fieldType === "relation") {
-                //モデルが存在する 
+                //テーブルが存在する 
                 const relationModel = models.find(m => m._id === field.relation.modelId);
-                expect(relationModel !== undefined, model, field, "関連付けるモデルが存在しません");
-                //関連フィールドが存在する
+                expect(relationModel !== undefined, model, field, "関連付けるテーブルが存在しません");
+                //関連カラムが存在する
                 const relationField = relationModel?.fields.find(f => f._id === field.relation.relationFieldIds[0]);
-                expect(relationField !== undefined, model, field, "関連付けるフィールドが存在しません");
+                expect(relationField !== undefined, model, field, "関連付けるカラムが存在しません");
                 //DisplayColumnが存在する
                 if (field.meta.displayColumn) {
                     expect(relationModel?.fields.find(f => f._id === field.meta.displayColumn) !== undefined, model, field, "DisplayColumnが存在しません");
