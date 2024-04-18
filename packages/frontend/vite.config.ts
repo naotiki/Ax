@@ -3,10 +3,11 @@ import { installGlobals } from "@remix-run/node";
 import { defineConfig } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 
-installGlobals();
+//installGlobals();
 
 export default defineConfig({
   server: {
+    host:"0.0.0.0",
     port: 7000,
   },
   plugins: [remix(), tsconfigPaths()],
