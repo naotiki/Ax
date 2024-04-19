@@ -3,7 +3,7 @@ import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { ModelValidator, PrismaSchemaGenerator, type ModelType } from 'lib'
 import { Operation, diff, flattenChangeset } from 'json-diff-ts';
-const app = new Hono()
+const app = new Hono().basePath("/api")
 const headerContents = `
 datasource db {
   provider = "postgresql"
@@ -15,25 +15,25 @@ generator client {
 }
 `
 //app.use(cors())
-app.get("/api/a", async (c) => {
+app.get("/a", async (c) => {
   return c.text('Hello Hono!')
 })
 const dataDir = "../../.axcel/"
 const schemaFile=Bun.file(`${dataDir}schema.json`)
-app.get("/api/ax/schema", async (c) => {
+app.get("/ax/schema", async (c) => {
   if (await schemaFile.exists()) {
     return c.json<ModelType[]>(await schemaFile.json())
   }
   return c.json<ModelType[]>([])
 })
 
-app.get("/api/ax/diff", async (c) => {
+app.get("/ax/diff", async (c) => {
   const models = await c.req.json<ModelType[]>()
   const result = diff([], models,)
   return c.json(result)
 });
 let oldModels: ModelType[] = []
-app.post('/api/ax/migrate', async (c) => {
+app.post('/ax/migrate', async (c) => {
   const models = await c.req.json<ModelType[]>()
   const r = diff(oldModels, models,)
   oldModels = models
