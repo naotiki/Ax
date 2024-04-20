@@ -1,4 +1,4 @@
-import { Group, Stack, Switch, Title, Text } from "@mantine/core";
+import { Group, Stack, Switch, Title, Text, Divider } from "@mantine/core";
 import { json } from "@remix-run/node";
 import { useState } from "react";
 import { ColorSchemeToggle } from "~/components/ColorSchemeToggle";
@@ -13,14 +13,14 @@ export default function AxEditor() {
       <Stack>
         <Editor
           initialModels={[]}
-          allowEditMode={checked ? "develop" : "safety"}
+          allowEditMode={checked ? ["develop","axcelFront","add"] : ["add","axcelFront"]}
           headerLeftSection={
             <Group>
               <ColorSchemeToggle />
             </Group>
           }
           headerRightSection={
-            <Group>
+            <Group >
               {checked && (
                 <Stack gap={0}>
                   <Title c={"red"} order={4}>
@@ -36,6 +36,7 @@ export default function AxEditor() {
                 description="管理者のみが利用できるモード"
                 color="red"
               />
+              <Divider orientation="vertical"/>
             </Group>
           }
         />

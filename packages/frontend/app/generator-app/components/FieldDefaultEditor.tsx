@@ -2,13 +2,11 @@ import {
   type DBType,
   type ValueType,
   DefaultValueProviders,
-  type FieldDefault, type AxTypes,
-  getAxTypeData
+  type FieldDefault,
+  type AxTypes,
+  getAxTypeData,
 } from "lib";
-import {
-  Group, Select, ActionIcon,
-  Radio, Box
-} from "@mantine/core";
+import { Group, Select, ActionIcon, Radio, Box } from "@mantine/core";
 import { useState, type FC } from "react";
 import { IconX } from "@tabler/icons-react";
 import { AxcelInput } from "./AxcelInput";
@@ -17,12 +15,16 @@ type FieldDefaultEditorProps = {
   field: ValueType<AxTypes>;
   value: FieldDefault<DBType> | undefined;
   onChange: (value: FieldDefault<DBType> | undefined) => void;
+  disabled?: boolean;
 };
 export const FieldDefaultEditor: FC<FieldDefaultEditorProps> = ({
-  field, value, onChange,
+  field,
+  value,
+  onChange,
+  disabled,
 }: FieldDefaultEditorProps) => {
   const [radioValue, setRadioValue] = useState<"none" | "value" | "provider">(
-    () => value?.type ?? "none"
+    () => value?.type ?? "none",
   );
   return (
     <>
@@ -49,9 +51,9 @@ export const FieldDefaultEditor: FC<FieldDefaultEditorProps> = ({
         defaultValue="none"
       >
         <Group mt="xs">
-          <Radio value="none" label="なし" />
-          <Radio value="value" label="固定値" />
-          <Radio value="provider" label="自動生成" />
+          <Radio value="none" label="なし" disabled={disabled} />
+          <Radio value="value" label="固定値" disabled={disabled} />
+          <Radio value="provider" label="自動生成" disabled={disabled} />
         </Group>
       </Radio.Group>
       {radioValue === "value" && (
@@ -59,14 +61,18 @@ export const FieldDefaultEditor: FC<FieldDefaultEditorProps> = ({
           <Group>
             <AxcelInput
               field={field}
-              value={value?.type === "value" ? value?.defaultValue ?? null : null}
+              value={
+                value?.type === "value" ? value?.defaultValue ?? null : null
+              }
               onValueChange={(v) => {
                 onChange({
                   type: "value",
                   dbType: getAxTypeData(field.axType).db,
                   defaultValue: v,
                 });
-              }} />
+              }}
+              disabled={disabled}
+            />
             <ActionIcon
               variant="subtle"
               color="red"
@@ -78,7 +84,7 @@ export const FieldDefaultEditor: FC<FieldDefaultEditorProps> = ({
                   defaultValue: null,
                 });
               }}
-              disabled={value?.type !== "value" || value?.defaultValue === null}
+              disabled={value?.type !== "value" || value?.defaultValue === null||disabled}
             >
               <IconX />
             </ActionIcon>
@@ -98,7 +104,9 @@ export const FieldDefaultEditor: FC<FieldDefaultEditorProps> = ({
             value: v.id,
             label: v.name,
             disabled: v.dbType !== getAxTypeData(field.axType).db,
-          }))} />
+          }))}
+          disabled={disabled}
+        />
       )}
     </>
   );

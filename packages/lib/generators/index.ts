@@ -1,0 +1,1 @@
+export {PrismaSchemaGenerator} from "./prisma";

@@ -39,11 +39,16 @@ import {
 import { RuleEditor } from "./RuleEditor";
 import { renderSelectOption, ruleLabels } from "../AxEditor";
 import { FieldDefaultEditor } from "./FieldDefaultEditor";
+import { useSchamaEditorContext } from "./EditSchemaContext";
+import { injectProps } from "../utils/InjectProps";
 export type FieldEditorProps = {
   field: ValueType<AxTypes>;
   onSave: (field: ValueType<AxTypes>) => void;
+  isNewModel: boolean;
 };
-export function FieldEditor({ field, onSave }: FieldEditorProps) {
+export function FieldEditor({ field, onSave, isNewModel }: FieldEditorProps) {
+  const ctx = useSchamaEditorContext();
+  const isNewField = ctx.addedFieldIds.includes(field._id) || isNewModel;
   const [newEnum, setNewEnum] = useState<{
     value: string;
     label: string;
@@ -61,6 +66,7 @@ export function FieldEditor({ field, onSave }: FieldEditorProps) {
         onChange={(e) => {
           onSave({ ...field, name: e.currentTarget.value });
         }}
+        {...injectProps(ctx, "develop", isNewField)}
       />
 
       <TextInput
@@ -74,21 +80,38 @@ export function FieldEditor({ field, onSave }: FieldEditorProps) {
             meta: { ...field.meta, label: e.currentTarget.value },
           });
         }}
+        {...injectProps(ctx, "axcelFront", isNewField)}
       />
 
       <Select
         value={field.axType}
         onChange={(value) => {
           let typeParams = {};
-          if (value === "Enum") {
-            typeParams = {
-              name: "",
-              entries: [],
-            } satisfies AxTypesWithProperties["Enum"];
-          } else if (value === "Array") {
-            typeParams = {
-              of: "string",
-            } satisfies AxTypesWithProperties["Array"];
+          switch (value as AxTypes) {
+            case "string":
+            case "int":
+            case "float":
+            case "decimal":
+            case "bool":
+            case "date":
+              typeParams = {
+                updatedAt: false,
+                meta: {
+                  isDateOnly: false,
+                },
+              } satisfies AxTypesWithProperties["date"];
+              break;
+            case "Array":
+              typeParams = {
+                of: "string",
+              } satisfies AxTypesWithProperties["Array"];
+              break;
+            case "Enum":
+              typeParams = {
+                name: "",
+                entries: [],
+              } satisfies AxTypesWithProperties["Enum"];
+              break;
           }
           onSave({ ...field, axType: value as AxTypes, typeParams });
         }}
@@ -101,18 +124,47 @@ export function FieldEditor({ field, onSave }: FieldEditorProps) {
         size="md"
         data={fieldTypesSelectData}
         renderOption={renderSelectOption}
+        {...injectProps(ctx, "develop", isNewField)}
       />
+      {checkFieldType(field, "date") && (
+        <Box ml={20}>
+          <Checkbox
+            label="日付のみ"
+            description="日付のみを許可します。"
+            checked={field.typeParams.meta.isDateOnly}
+            onChange={(e) => {
+              onSave({
+                ...field,
+                typeParams: {
+                  ...field.typeParams,
+                  meta: {
+                    ...field.typeParams.meta,
+                    isDateOnly: e.currentTarget.checked,
+                  },
+                },
+              });
+            }}
+            {...injectProps(ctx, "axcelFront", isNewField)}
+          />
+        </Box>
+      )}
       {checkFieldType(field, "Enum") && (
         <Box ml={20}>
-          <TextInput label="選択肢グループの名前" value={field.typeParams.name} onChange={(e)=>{
-            onSave({
-              ...field,
-              typeParams: {
-                ...field.typeParams,
-                name: e.currentTarget.value
-              }
-            })
-          }}/>
+          <TextInput
+            label="選択肢グループの名前"
+            placeholder="選択肢グループの名前(英数記号)"
+            value={field.typeParams.name}
+            onChange={(e) => {
+              onSave({
+                ...field,
+                typeParams: {
+                  ...field.typeParams,
+                  name: e.currentTarget.value,
+                },
+              });
+            }}
+            {...injectProps(ctx, "develop", isNewField)}
+          />
           {field.typeParams.entries.map((e) => (
             <Text key={e.value}>
               {e.value} {e.meta.label}
@@ -128,6 +180,7 @@ export function FieldEditor({ field, onSave }: FieldEditorProps) {
               style={{
                 flexGrow: 1,
               }}
+              {...injectProps(ctx, "add", isNewField)}
             />
             <TextInput
               placeholder="新しい表示名"
@@ -138,6 +191,7 @@ export function FieldEditor({ field, onSave }: FieldEditorProps) {
               style={{
                 flexGrow: 1,
               }}
+              {...injectProps(ctx, "add", isNewField)}
             />
             <ActionIcon
               variant="transparent"
@@ -161,15 +215,17 @@ export function FieldEditor({ field, onSave }: FieldEditorProps) {
                       ...field.typeParams.entries,
                       {
                         value: newEnum.value,
-                        meta:{
-                          label: newEnum.label !== "" ? newEnum.label : undefined,
-                        }
+                        meta: {
+                          label:
+                            newEnum.label !== "" ? newEnum.label : undefined,
+                        },
                       } satisfies AxTypesWithProperties["Enum"]["entries"][number],
                     ],
                   },
                 });
                 setNewEnum({ value: "", label: "" });
               }}
+              {...injectProps(ctx, "add", isNewField)}
             >
               <IconPlus />
             </ActionIcon>
@@ -196,6 +252,7 @@ export function FieldEditor({ field, onSave }: FieldEditorProps) {
             (e) => e.value !== "Array" && e.value !== "Enum",
           )}
           renderOption={renderSelectOption}
+          {...injectProps(ctx, "develop", isNewField)}
         />
       )}
       <Textarea
@@ -208,6 +265,7 @@ export function FieldEditor({ field, onSave }: FieldEditorProps) {
             meta: { ...field.meta, description: e.currentTarget.value },
           });
         }}
+        {...injectProps(ctx, "axcelFront", isNewField)}
       />
 
       <FieldDefaultEditor
@@ -217,6 +275,7 @@ export function FieldEditor({ field, onSave }: FieldEditorProps) {
         onChange={(v) => {
           onSave({ ...field, default: v });
         }}
+        {...injectProps(ctx, "develop", isNewField)}
       />
       <Stack my={20}>
         <Checkbox
@@ -226,7 +285,10 @@ export function FieldEditor({ field, onSave }: FieldEditorProps) {
           onChange={(e) => {
             onSave({ ...field, optional: e.currentTarget.checked });
           }}
-          disabled={field.id}
+          {...injectProps(ctx, "develop", isNewField)}
+          disabled={
+            field.id || injectProps(ctx, "develop", isNewField).disabled
+          }
         />
         <Checkbox
           label="IDとして指定"
@@ -235,7 +297,10 @@ export function FieldEditor({ field, onSave }: FieldEditorProps) {
           onChange={(e) => {
             onSave({ ...field, id: e.currentTarget.checked });
           }}
-          disabled={field.optional}
+          {...injectProps(ctx, "develop", isNewField)}
+          disabled={
+            field.optional || injectProps(ctx, "develop", isNewField).disabled
+          }
         />
         <Checkbox
           label="ユニークな値"
@@ -244,7 +309,10 @@ export function FieldEditor({ field, onSave }: FieldEditorProps) {
           onChange={(e) => {
             onSave({ ...field, unique: e.currentTarget.checked });
           }}
-          disabled={field.id}
+          {...injectProps(ctx, "develop", isNewField)}
+          disabled={
+            field.id || injectProps(ctx, "develop", isNewField).disabled
+          }
         />
         <Divider />
         <Checkbox
@@ -257,6 +325,7 @@ export function FieldEditor({ field, onSave }: FieldEditorProps) {
               meta: { ...field.meta, readonly: e.currentTarget.checked },
             });
           }}
+          {...injectProps(ctx, "axcelFront", isNewField)}
         />
         <Checkbox
           label="非表示"
@@ -268,6 +337,7 @@ export function FieldEditor({ field, onSave }: FieldEditorProps) {
               meta: { ...field.meta, invisible: e.currentTarget.checked },
             });
           }}
+          {...injectProps(ctx, "axcelFront", isNewField)}
         />
       </Stack>
       <Box>
@@ -297,6 +367,7 @@ export function FieldEditor({ field, onSave }: FieldEditorProps) {
                     },
                   });
                 }}
+                {...injectProps(ctx, "axcelFront", isNewField)}
               >
                 <IconTrash />
               </ActionIcon>
@@ -317,14 +388,19 @@ export function FieldEditor({ field, onSave }: FieldEditorProps) {
                     },
                   });
                 }}
+                {...injectProps(ctx, "axcelFront", isNewField)}
               />
               <Divider />
             </Stack>
           </Box>
         ))}
-        <Menu shadow="md">
+        <Menu shadow="md" {...injectProps(ctx, "axcelFront", isNewField)}>
           <Menu.Target>
-            <Button leftSection={<IconPlus />} fullWidth>
+            <Button
+              leftSection={<IconPlus />}
+              {...injectProps(ctx, "axcelFront", isNewField)}
+              fullWidth
+            >
               ルールを追加
             </Button>
           </Menu.Target>

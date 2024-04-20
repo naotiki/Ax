@@ -2,16 +2,16 @@ import type { DBType, RulesOfJSType, AxTypes, AxTypeOfTypeExtender, AxTypeDetail
 
 export type FieldTypes = ValueType<AxTypes> | RelationType;
 
-export type FieldType<F extends string,M extends {}> = {
+export type FieldType<F extends string, M extends {}> = {
 	readonly _id: string;
 	name: string;
 	readonly fieldType: F;
-	meta:{
+	meta: {
 		label?: string;
 		description?: string;
-		readonly: boolean,
-		invisible: boolean
-	}&M
+		readonly: boolean;
+		invisible: boolean;
+	} & M
 };
 
 export type ValueType<A extends AxTypes> = {
@@ -21,7 +21,7 @@ export type ValueType<A extends AxTypes> = {
 	id: boolean;
 	unique: boolean;
 	default?: FieldDefault<AxTypeDetail<A>["db"]>;
-} & FieldType<"value",{
+} & FieldType<"value", {
 	rules: RulesOfJSType<AxTypeDetail<A>["js"]>[];
 }>;
 
@@ -30,7 +30,7 @@ export type RelationType = {
 		modelId: string;
 		relationFieldIds: string[];
 	};
-} & FieldType<"relation",{displayColumn?: string;}>;
+} & FieldType<"relation", { displayColumn?: string; }>;
 
 export type FieldDefault<D extends DBType> = {
 	type: "value";

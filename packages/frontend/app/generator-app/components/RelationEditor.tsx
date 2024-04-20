@@ -3,7 +3,7 @@ import { Box, Select, TextInput, Title } from "@mantine/core";
 import type { FC } from "react";
 
 type RelationEditorProps = {
-  otherModels: ModelType[];
+  otherModels: Schema;
   field: RelationType;
   onSave: (field: RelationType) => void;
 };

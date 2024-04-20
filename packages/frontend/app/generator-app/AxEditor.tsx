@@ -1,4 +1,10 @@
-import { type ModelType, type Rules, type JSType, ModelValidator } from "lib";
+import {
+  type ModelType,
+  type Rules,
+  type JSType,
+  ModelValidator,
+  getAddedElement,
+} from "lib";
 import {
   AppShell,
   Burger,
@@ -14,43 +20,93 @@ import {
   HoverCard,
   Notification,
   Center,
+  ActionIcon,
+  Modal,
+  Code,
+  Box,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { useEffect, useState } from "react";
-import { IconSearch } from "@tabler/icons-react";
+import { IconCode, IconSearch } from "@tabler/icons-react";
 import { fieldTypesSelectData } from "./components/FieldEditor";
 import { nanoid } from "nanoid";
 import type { ModelValidateError } from "lib/functions/ModelValidator";
 import { ModelEditor } from "./components/ModelEditor";
-                  //全変更可, テーブル+カラム追加+Axcel, Axcelのみ
-const EditLevel = ["develop", "safety", "onlyAxcel"] as const;
-type EditLevel = typeof EditLevel[number];
+import {
+  SchemaEditorProvider,
+  type SchemaEditorData,
+} from "./components/EditSchemaContext";
+import { injectProps } from "./utils/InjectProps";
+//全変更可, テーブル+カラム追加+Axcel, Axcelのみ
+const EditLevel = ["develop", "add", "axcelFront"] as const;
+export type EditLevel = (typeof EditLevel)[number];
 
 type EditorProps = {
   headerLeftSection?: React.ReactNode;
   headerRightSection?: React.ReactNode;
-  initialModels: ModelType[];
-  allowEditMode: EditLevel;
+  initialModels: Schema;
+  allowEditMode: EditLevel[];
 };
 
-export function AxEditor(props: EditorProps) {
+export function AxEditor({ initialModels, ...props }: EditorProps) {
   const [opened, { toggle }] = useDisclosure();
-  const [models, setModels] = useState(props.initialModels);
-  const [errors, setErrors] = useState<ModelValidateError[] | null>(null);
+  const [models, setModels] = useState(initialModels);
+  const [issues, setErrors] = useState<ModelValidateError[] | null>(null);
+  const [schemaEditorData, setSchemaEditorData] = useState<SchemaEditorData>({
+    allowedLevel: props.allowEditMode,
+    addedFieldIds: [],
+    addedModelIds: [],
+  });
   useEffect(() => {
     setErrors(null);
     ModelValidator(models).then((errors) => {
       setErrors(errors);
     });
-  }, [models]);
+    const added = getAddedElement(initialModels, models);
+    setSchemaEditorData((s) => ({
+      ...s,
+      addedFieldIds: added.fieldIds,
+      addedModelIds: added.modelIds,
+    }));
+  }, [models, initialModels]);
+  useEffect(() => {
+    setSchemaEditorData((s) => ({
+      ...s,
+      allowedLevel: props.allowEditMode,
+    }));
+  }, [props.allowEditMode]);
   const [selectedModelId, setSelectedModelId] = useState<string | null>(null);
   const selectedModel =
     selectedModelId !== null
       ? models.find((m) => m._id === selectedModelId)
       : null;
+  const [openedSchemaPreview, { open: openSchema, close: closeSchema }] =
+    useDisclosure(false);
   return (
-    <>
+    <SchemaEditorProvider value={schemaEditorData}>
       {/* <MantineProvider theme={theme} defaultColorScheme="dark"> */}
+      <Modal
+        opened={openedSchemaPreview}
+        onClose={closeSchema}
+        title="Ax Schema"
+      >
+        <Group
+          align="start"
+          style={{
+            alignItems: "stretch",
+          }}
+          justify="space-around"
+        >
+          <Box>
+            <Title order={3}>変更前</Title>
+            <Code block>{JSON.stringify(initialModels, null, 2)}</Code>
+          </Box>
+          <Box>
+            <Title order={3}>変更後</Title>
+            <Code block>{JSON.stringify(models, null, 2)}</Code>
+          </Box>
+        </Group>
+      </Modal>
       <AppShell
         header={{ height: 60 }}
         navbar={{
@@ -71,28 +127,44 @@ export function AxEditor(props: EditorProps) {
             <Title order={1}>
               <i>Axcel Editor</i>
             </Title>
+            <ActionIcon variant="outline" onClick={openSchema}>
+              <IconCode />
+            </ActionIcon>
             {props.headerLeftSection}
             <Space style={{ flexGrow: 1 }} />
             {props.headerRightSection}
-            {errors ? (
+            {issues ? (
               <HoverCard shadow="md">
                 <HoverCard.Target>
                   <Group>
                     <Badge
                       size="xl"
                       circle
-                      color={errors.length > 0 ? "red" : "green"}
+                      color={
+                        issues.length > 0
+                          ? issues.some((e) => e.level === "error")
+                            ? "red"
+                            : issues.some((e) => e.level === "warn")
+                              ? "yellow"
+                              : "cyan"
+                          : "green"
+                      }
                     >
-                      {errors.length}
+                      {issues.length}
                     </Badge>
 
                     <Button
-                      disabled={!errors || errors.length > 0}
+                      disabled={
+                        !issues || issues.some((e) => e.level === "error")
+                      }
                       onClick={() => {
-                        fetch("http://localhost:8080/api/lib/migrate", {
+                        fetch("http://localhost:8080/api/ax/migrate", {
                           method: "POST",
-                          body: JSON.stringify(models),
-                        });
+                          body: JSON.stringify({
+                            oldCheckSum: "123",
+                            schema: models,
+                          }),
+                        }).then((r) => {});
                       }}
                     >
                       変更を適用
@@ -102,23 +174,34 @@ export function AxEditor(props: EditorProps) {
                 <HoverCard.Dropdown>
                   <Center>
                     <IconSearch />
-                    <Title order={5}>見つかったエラー</Title>
+                    <Title order={5}>見つかった問題</Title>
                   </Center>
-                  {errors.length > 0 ? (
-                    errors.map((error) => (
+                  {issues.length > 0 ? (
+                    issues.map((issue) => (
                       <Notification
-                        key={error.error + error.modelId + error.fieldId}
-                        color="red"
+                        key={
+                          issue.msg +
+                          issue.modelId +
+                          issue.fieldId +
+                          issue.level
+                        }
+                        color={
+                          issue.level === "error"
+                            ? "red"
+                            : issue.level === "warn"
+                              ? "yellow"
+                              : "cyan"
+                        }
                         withCloseButton={false}
                         title={(() => {
                           const model = models.find(
-                            (m) => m._id === error.modelId,
+                            (m) => m._id === issue.modelId,
                           );
                           const modelName =
                             model?.meta?.label ?? model?.name ?? "不明";
-                          if (error.fieldId) {
+                          if (issue.fieldId) {
                             const field = model?.fields.find(
-                              (f) => f._id === error.fieldId,
+                              (f) => f._id === issue.fieldId,
                             );
                             return `${modelName} > ${
                               field?.meta?.label ?? field?.name ?? "不明"
@@ -127,10 +210,11 @@ export function AxEditor(props: EditorProps) {
                           return modelName;
                         })()}
                         onClick={() => {
-                          setSelectedModelId(error.modelId);
+                          setSelectedModelId(issue.modelId);
                         }}
                       >
-                        {error.error}
+                        {issue.msg}
+                        <Text size="xs">{issue.description}</Text>
                       </Notification>
                     ))
                   ) : (
@@ -174,12 +258,13 @@ export function AxEditor(props: EditorProps) {
                     label: `新しいテーブル ${id.slice(0, 4)}`,
                     computedStyles: [],
                   },
-                  name: `NewModel_${id.slice(0, 4)}`,
+                  name: `NewTable_${id.slice(0, 4)}`,
                   fields: [],
                 };
                 setModels([...models, m]);
                 setSelectedModelId(m._id);
               }}
+              {...injectProps(schemaEditorData, "add")}
             >
               テーブルを追加
             </Button>
@@ -189,8 +274,14 @@ export function AxEditor(props: EditorProps) {
           {selectedModel && (
             <ModelEditor
               model={selectedModel}
-              models={models}
+              schema={models}
               onSave={(model) => {
+                if (model === null) {
+                  setModels((models) =>
+                    models.filter((m) => m._id !== selectedModelId),
+                  );
+                  return;
+                }
                 setModels((models) =>
                   models.map((m) => (m._id === model._id ? model : m)),
                 );
@@ -200,7 +291,7 @@ export function AxEditor(props: EditorProps) {
         </AppShell.Main>
       </AppShell>
       {/* </MantineProvider> */}
-    </>
+    </SchemaEditorProvider>
   );
 }
 

@@ -4,10 +4,12 @@ import type { FC } from "react";
 type RuleEditorProps = {
   rule: Rules;
   onRuleChange: (rule: Rules) => void;
+  disabled: boolean;
 };
 export const RuleEditor: FC<RuleEditorProps> = ({
   rule,
   onRuleChange,
+  disabled,
 }: RuleEditorProps) => {
   const values = Object.values(rule.params);
   switch (rule.ruleName) {
@@ -29,6 +31,7 @@ export const RuleEditor: FC<RuleEditorProps> = ({
                 ),
               });
             }}
+            disabled={disabled}
           />
           <NumberInput
             label="最大文字列長"
@@ -45,6 +48,7 @@ export const RuleEditor: FC<RuleEditorProps> = ({
                 ),
               });
             }}
+            disabled={disabled}
           />
         </>
       );
@@ -65,6 +69,7 @@ export const RuleEditor: FC<RuleEditorProps> = ({
                 ),
               });
             }}
+            disabled={disabled}
           />
           <NumberInput
             label="最大値"
@@ -79,6 +84,7 @@ export const RuleEditor: FC<RuleEditorProps> = ({
                 ),
               });
             }}
+            disabled={disabled}
           />
         </>
       );
@@ -101,6 +107,7 @@ export const RuleEditor: FC<RuleEditorProps> = ({
                 ) as RegexRule["params"],
               });
             }}
+            disabled={disabled}
           />
           <TextInput
             label="パターン名"
@@ -117,6 +124,7 @@ export const RuleEditor: FC<RuleEditorProps> = ({
                 ) as RegexRule["params"],
               });
             }}
+            disabled={disabled}
           />
           <TextInput
             label="ヒント"
@@ -133,6 +141,7 @@ export const RuleEditor: FC<RuleEditorProps> = ({
                 ) as RegexRule["params"],
               });
             }}
+            disabled={disabled}
           />
         </>
       );

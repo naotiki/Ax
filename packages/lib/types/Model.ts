@@ -10,7 +10,7 @@ export type ModelType = {
 		computedStyles: ({
 			compute: BoolExpression;
 		} & ({
-			row: Record<string, string>;
+			_row: Record<string, string>;
 		} | Record<string, Record<string, string>>))[];
 	}
 };
@@ -27,3 +27,5 @@ type BoolExpression = {
 } | {
 	or: BoolExpression[];
 }
+
+export type Schema = ModelType[]

@@ -1,4 +1,4 @@
-import { DefaultValueProviders, type ModelType } from "lib";
+import { DefaultValueProviders, type Schema, type ModelType } from "lib";
 import {
   Title,
   Group,
@@ -12,7 +12,7 @@ import {
   Popover,
   Space,
 } from "@mantine/core";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   IconCirclesRelation,
   IconEdit,
@@ -26,17 +26,23 @@ import { FieldEditor } from "./FieldEditor";
 import { RelationEditor } from "./RelationEditor";
 import { nanoid } from "nanoid";
 import { injectProps } from "../utils/InjectProps";
+import type { EditLevel } from "../AxEditor";
+import { useSchamaEditorContext } from "./EditSchemaContext";
 type ModelEditorProps = {
   model: ModelType;
-  models: ModelType[];
-  onSave: (model: ModelType) => void;
+  schema: Schema;
+  onSave: (model: ModelType | null) => void;
 };
-export function ModelEditor({ model, models, onSave }: ModelEditorProps) {
+export function ModelEditor({ model, schema: models, onSave }: ModelEditorProps) {
   const [selectedFieldId, setSelectedFieldId] = useState<string | null>(null);
   const selectedField =
     selectedFieldId !== null
       ? model.fields.find((f) => f._id === selectedFieldId)
       : null;
+  const ctx = useSchamaEditorContext();
+  const isNewModel = ctx.addedModelIds.includes(model._id);
+  console.log(ctx.addedModelIds, isNewModel, model._id);
+
   return (
     <Group w={"100%"} h={"100%"} align="start">
       <Container my={"md"} style={{ flexGrow: 1 }}>
@@ -44,10 +50,34 @@ export function ModelEditor({ model, models, onSave }: ModelEditorProps) {
           <Title order={3} my={10}>
             テーブル編集
           </Title>
-          <Button color="red" {...injectProps()}>
-            <IconTrash />
-            削除
-          </Button>
+
+          <Popover
+            width={200}
+            position="bottom"
+            withArrow
+            shadow="md"
+            {...injectProps(ctx, "develop", isNewModel)}
+          >
+            <Popover.Target>
+              <Button color="red" {...injectProps(ctx, "develop", isNewModel)}>
+                <IconTrash />
+                削除
+              </Button>
+            </Popover.Target>
+            <Popover.Dropdown>
+              <Button
+                fullWidth
+                color="red"
+                leftSection={<IconTrash />}
+                onClick={() => {
+                  onSave(null);
+                }}
+                {...injectProps(ctx, "develop", isNewModel)}
+              >
+                削除
+              </Button>
+            </Popover.Dropdown>
+          </Popover>
         </Group>
         <TextInput
           size="xl"
@@ -57,6 +87,7 @@ export function ModelEditor({ model, models, onSave }: ModelEditorProps) {
           onChange={(e) => {
             onSave({ ...model, name: e.currentTarget.value });
           }}
+          {...injectProps(ctx, "develop", isNewModel)}
         />
         <TextInput
           size="xl"
@@ -69,6 +100,7 @@ export function ModelEditor({ model, models, onSave }: ModelEditorProps) {
               meta: { ...model.meta, label: e.currentTarget.value },
             });
           }}
+          {...injectProps(ctx, "axcelFront", isNewModel)}
         />
         <Title order={3}>カラム</Title>
         {model.fields.map((f) => (
@@ -108,9 +140,19 @@ export function ModelEditor({ model, models, onSave }: ModelEditorProps) {
                   </>
                 )}
                 <Space style={{ flexGrow: 1 }} />
-                <Popover width={200} position="bottom" withArrow shadow="md">
+                <Popover
+                  width={200}
+                  position="bottom"
+                  withArrow
+                  shadow="md"
+                  {...injectProps(ctx, "develop", isNewModel)}
+                >
                   <Popover.Target>
-                    <ActionIcon color="red" m={5}>
+                    <ActionIcon
+                      color="red"
+                      m={5}
+                      {...injectProps(ctx, "develop", isNewModel)}
+                    >
                       <IconTrash />
                     </ActionIcon>
                   </Popover.Target>
@@ -127,6 +169,7 @@ export function ModelEditor({ model, models, onSave }: ModelEditorProps) {
                           ),
                         });
                       }}
+                      {...injectProps(ctx, "develop", isNewModel)}
                     >
                       削除
                     </Button>
@@ -136,9 +179,13 @@ export function ModelEditor({ model, models, onSave }: ModelEditorProps) {
             </Card.Section>
           </Card>
         ))}
-        <Menu shadow="md">
+        <Menu shadow="md" {...injectProps(ctx, "add", isNewModel)}>
           <Menu.Target>
-            <Button leftSection={<IconPlus />} fullWidth>
+            <Button
+              leftSection={<IconPlus />}
+              fullWidth
+              {...injectProps(ctx, "add", isNewModel)}
+            >
               カラムを追加
             </Button>
           </Menu.Target>
@@ -154,7 +201,7 @@ export function ModelEditor({ model, models, onSave }: ModelEditorProps) {
                     ...model.fields,
                     {
                       _id: id,
-                      name: `NewField_${id.slice(0, 4)}`,
+                      name: `NewColumn_${id.slice(0, 4)}`,
                       meta: {
                         label: `新しいカラム ${id.slice(0, 4)}`,
                         rules: [],
@@ -185,7 +232,7 @@ export function ModelEditor({ model, models, onSave }: ModelEditorProps) {
                     ...model.fields,
                     {
                       _id: id,
-                      name: `NewField_${id.slice(0, 4)}`,
+                      name: `NewColumn_${id.slice(0, 4)}`,
                       meta: {
                         label: `新しい関連付け ${id.slice(0, 4)}`,
                         readonly: false,
@@ -281,6 +328,7 @@ export function ModelEditor({ model, models, onSave }: ModelEditorProps) {
               ),
             });
           }}
+          isNewModel={isNewModel}
         />
       )}
       {selectedField && selectedField.fieldType === "relation" && (

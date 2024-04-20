@@ -4,6 +4,13 @@
   "type": "module",
   "main": "index.ts",
   "dependencies": {
-    "json-diff-ts": "^2.2.1"
+    "diff": "^5.2.0",
+    "drizzle-orm": "^0.30.8",
+    "json-diff-ts": "^2.2.1",
+    "jsonpath": "^1.1.1"
+  },
+  "devDependencies": {
+    "@types/diff": "^5.0.9",
+    "@types/jsonpath": "^0.2.4"
   }
 }

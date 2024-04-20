@@ -1,5 +1,8 @@
-export const injectProps = () => {
+import type { EditLevel } from "../AxEditor"
+import type { SchemaEditorData } from "../components/EditSchemaContext"
+
+export const injectProps = (ctx:SchemaEditorData,level: EditLevel, bypass?: boolean) => {
     return {
-        disabled :true
+        disabled: bypass === true ? false : !ctx.allowedLevel.includes(level)
     }
 }
